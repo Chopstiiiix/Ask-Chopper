@@ -149,6 +149,11 @@ def generate_response(prompt, conversation_history=None):
         # Add current user message
         messages.append({"role": "user", "content": prompt})
 
+        # Log API call details
+        print(f"🚀 Making OpenAI API call...")
+        print(f"📝 Messages count: {len(messages)}")
+        print(f"🔑 API Key: {os.environ.get('OPENAI_API_KEY', 'NOT_SET')[:10]}...")
+
         # Generate response using Chat Completions API
         response = client.chat.completions.create(
             model="gpt-4",
@@ -157,10 +162,18 @@ def generate_response(prompt, conversation_history=None):
             max_tokens=1500
         )
 
+        # Log successful API response
+        print(f"✅ OpenAI API Success!")
+        print(f"📊 Request ID: {response.id}")
+        print(f"🎯 Model: {response.model}")
+        print(f"🔢 Tokens used: {response.usage.total_tokens}")
+        print(f"📍 Check logs at: https://platform.openai.com/usage")
+
         response_text = response.choices[0].message.content
         # Prepend Chopper signature to response
         return f"[Chopper]: {response_text}"
     except Exception as e:
+        print(f"❌ OpenAI API Error: {str(e)}")
         return f"An error occurred: {str(e)}"
 
 @app.route('/')
