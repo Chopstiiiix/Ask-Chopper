@@ -149,10 +149,10 @@ def generate_response(prompt, conversation_history=None):
         # Add current user message
         messages.append({"role": "user", "content": prompt})
 
-        # Log API call details
-        print(f"🚀 Making OpenAI API call...")
-        print(f"📝 Messages count: {len(messages)}")
-        print(f"🔑 API Key: {os.environ.get('OPENAI_API_KEY', 'NOT_SET')[:10]}...")
+        # Log API call details to both console and file
+        import sys
+        log_message = f"🚀 Making OpenAI API call... Messages: {len(messages)}, API Key: {os.environ.get('OPENAI_API_KEY', 'NOT_SET')[:10]}..."
+        print(log_message, file=sys.stdout, flush=True)
 
         # Generate response using Chat Completions API
         response = client.chat.completions.create(
@@ -163,11 +163,15 @@ def generate_response(prompt, conversation_history=None):
         )
 
         # Log successful API response
-        print(f"✅ OpenAI API Success!")
-        print(f"📊 Request ID: {response.id}")
-        print(f"🎯 Model: {response.model}")
-        print(f"🔢 Tokens used: {response.usage.total_tokens}")
-        print(f"📍 Check logs at: https://platform.openai.com/usage")
+        success_message = f"✅ OpenAI API Success! Request ID: {response.id}, Model: {response.model}, Tokens: {response.usage.total_tokens}"
+        print(success_message, file=sys.stdout, flush=True)
+
+        # Also log to file for persistent tracking
+        with open('/tmp/ask_chopper_api_logs.txt', 'a') as f:
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            f.write(f"[{timestamp}] {success_message}\n")
+            f.write(f"[{timestamp}] Check OpenAI dashboard: https://platform.openai.com/usage\n")
 
         response_text = response.choices[0].message.content
         # Prepend Chopper signature to response
