@@ -111,6 +111,53 @@
             border: 1px solid #2d2d2d;
         }
 
+        .assistant .message-content p {
+            margin-bottom: 12px;
+        }
+
+        .assistant .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .assistant .message-content ul, .assistant .message-content ol {
+            margin: 8px 0 12px 20px;
+        }
+
+        .assistant .message-content li {
+            margin-bottom: 4px;
+        }
+
+        .assistant .message-content code {
+            background: #2a2a2a;
+            color: #ffa500;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        .assistant .message-content pre {
+            background: #2a2a2a;
+            color: #e3e3e3;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .assistant .message-content strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .assistant .message-content em {
+            color: #cccccc;
+            font-style: italic;
+        }
+
         .message-label {
             font-size: 12px;
             color: #888888;
@@ -395,7 +442,7 @@
             const messageContent = document.createElement('div');
             messageContent.innerHTML = `
                 <div class="message-label">${isUser ? 'You' : 'Chopper'}</div>
-                <div class="message-content">${escapeHtml(content)}</div>
+                <div class="message-content">${isUser ? escapeHtml(content) : formatText(content)}</div>
             `;
 
             messageDiv.appendChild(messageContent);
@@ -407,6 +454,56 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function formatText(text) {
+            // First escape HTML characters for security
+            const div = document.createElement('div');
+            div.textContent = text;
+            let escapedText = div.innerHTML;
+
+            // Split by double line breaks for paragraphs
+            let paragraphs = escapedText.split(/\n\s*\n/);
+
+            // Format each paragraph
+            paragraphs = paragraphs.map(paragraph => {
+                if (paragraph.trim() === '') return '';
+
+                // Replace single line breaks with <br> within paragraphs
+                paragraph = paragraph.replace(/\n/g, '<br>');
+
+                // Format basic markdown-style elements
+                // Bold text (**text** or __text__)
+                paragraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                paragraph = paragraph.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+                // Italic text (*text* or _text_)
+                paragraph = paragraph.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                paragraph = paragraph.replace(/_(.*?)_/g, '<em>$1</em>');
+
+                // Inline code (`code`)
+                paragraph = paragraph.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+                // Wrap in paragraph tags
+                return `<p>${paragraph}</p>`;
+            });
+
+            // Join paragraphs and clean up empty ones
+            let result = paragraphs.filter(p => p !== '').join('');
+
+            // Handle lists (basic support for - or * bullet points)
+            result = result.replace(/<p>(.*?)(<br>[-*]\s.*?)<\/p>/g, (match, beforeList, listContent) => {
+                const items = listContent.split(/<br>[-*]\s/);
+                const listItems = items.slice(1).map(item => `<li>${item.trim()}</li>`).join('');
+                return beforeList ? `<p>${beforeList}</p><ul>${listItems}</ul>` : `<ul>${listItems}</ul>`;
+            });
+
+            // If no paragraphs were created, wrap the whole thing in a paragraph
+            if (!result.includes('<p>') && !result.includes('<ul>') && result.trim() !== '') {
+                result = `<p>${result}</p>`;
+            }
+
+            return result;
         }
 
         function showTyping() {
