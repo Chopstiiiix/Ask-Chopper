@@ -128,51 +128,40 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def generate_response(prompt, session_thread_id=None):
-    """Generate a response from the OpenAI Assistant API."""
-    assistant_id = os.environ.get("ASSISTANT_ID")
-    if not assistant_id:
-        return "ASSISTANT_ID environment variable not set. Please check your .env file.", None
-
+def generate_response(prompt, conversation_history=None):
+    """Generate a response using OpenAI Chat Completions API."""
     if not os.environ.get("OPENAI_API_KEY"):
-        return "OPENAI_API_KEY environment variable not set. Please check your .env file.", None
+        return "OPENAI_API_KEY environment variable not set. Please check your .env file."
 
     try:
-        # Use existing thread or create new one
-        if session_thread_id:
-            thread_id = session_thread_id
-        else:
-            thread = client.beta.threads.create()
-            thread_id = thread.id
+        # Build conversation messages
+        messages = [
+            {
+                "role": "system",
+                "content": "You are Chopper, an AI assistant that helps users with various tasks. Always be helpful, accurate, and concise."
+            }
+        ]
 
-        message = client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=prompt
+        # Add conversation history if available
+        if conversation_history:
+            messages.extend(conversation_history)
+
+        # Add current user message
+        messages.append({"role": "user", "content": prompt})
+
+        # Generate response using Chat Completions API
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1500
         )
 
-        run = client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=assistant_id
-        )
-
-        while run.status != 'completed':
-            time.sleep(1)
-            run = client.beta.threads.runs.retrieve(
-                thread_id=thread_id,
-                run_id=run.id
-            )
-            if run.status == 'failed':
-                return f"Assistant run failed: {run.last_error}", thread_id
-
-        messages = client.beta.threads.messages.list(
-            thread_id=thread_id
-        )
-        response_text = messages.data[0].content[0].text.value
+        response_text = response.choices[0].message.content
         # Prepend Chopper signature to response
-        return f"[Chopper]: {response_text}", thread_id
+        return f"[Chopper]: {response_text}"
     except Exception as e:
-        return f"An error occurred: {str(e)}", session_thread_id
+        return f"An error occurred: {str(e)}"
 
 @app.route('/')
 def index():
@@ -256,33 +245,34 @@ def chat():
         if attachment_info:
             ai_message += f"\n\n[User uploaded {len(attachment_info)} file(s):\n" + "\n".join(attachment_info) + "]"
 
-        # Get existing thread ID from session or previous messages
-        existing_thread_id = session.get('openai_thread_id')
-        if not existing_thread_id:
-            # Check if there are previous messages with thread ID
-            last_message = ChatMessage.query.filter_by(
-                session_id=session_id,
-                message_type='assistant'
-            ).order_by(ChatMessage.created_at.desc()).first()
-            if last_message and last_message.openai_thread_id:
-                existing_thread_id = last_message.openai_thread_id
+        # Build conversation history from previous messages
+        conversation_history = []
+        previous_messages = ChatMessage.query.filter_by(
+            session_id=session_id
+        ).order_by(ChatMessage.created_at).limit(10).all()  # Last 10 messages for context
+
+        for msg in previous_messages:
+            if msg.message_type == 'user':
+                conversation_history.append({
+                    "role": "user",
+                    "content": msg.content
+                })
+            elif msg.message_type == 'assistant':
+                # Remove [Chopper]: prefix for clean conversation history
+                clean_content = msg.content.replace("[Chopper]: ", "")
+                conversation_history.append({
+                    "role": "assistant",
+                    "content": clean_content
+                })
 
         # Generate AI response
-        ai_response, thread_id = generate_response(ai_message, existing_thread_id)
-
-        # Store thread ID in session for future use
-        if thread_id:
-            session['openai_thread_id'] = thread_id
-
-        # Update user message with thread information
-        user_msg.openai_thread_id = thread_id
+        ai_response = generate_response(ai_message, conversation_history)
 
         # Create assistant message record
         assistant_msg = ChatMessage(
             session_id=session_id,
             message_type='assistant',
             content=ai_response,
-            openai_thread_id=thread_id,
             response_time_ms=int((time.time() - start_time) * 1000)
         )
 
