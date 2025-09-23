@@ -2,3 +2,8 @@ openai
 flask
 flask-cors
 python-dotenv
+SQLAlchemy==2.0.23
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+Pillow==10.1.0
+Werkzeug==3.1.3

@@ -47,7 +47,7 @@ SECRET_KEY=your_secret_key_for_sessions
 
 ### 4. Run the Application
 ```bash
-python app.py
+python3 app.py
 ```
 
 The application will start on `http://localhost:8000`
@@ -85,7 +85,7 @@ The application will start on `http://localhost:8000`
 
 ### Development
 ```bash
-python app.py
+python3 app.py
 ```
 - Runs on `http://localhost:8000`
 - Debug mode enabled

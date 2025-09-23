@@ -174,11 +174,87 @@
             border-top: 1px solid #2d2d2d;
             display: flex;
             gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .attachment-preview {
+            display: none;
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            padding: 8px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .attachment-preview.show {
+            display: block;
+        }
+
+        .attachment-item {
+            display: flex;
             align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #e3e3e3;
+        }
+
+        .attachment-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .attachment-icon {
+            width: 16px;
+            height: 16px;
+            background: #4a4a4a;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #ffffff;
+        }
+
+        .attachment-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .attachment-size {
+            font-size: 10px;
+            color: #888888;
+        }
+
+        .attachment-remove {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+
+        .attachment-remove:hover {
+            background: #ff6b6b;
+            color: #ffffff;
         }
 
         #messageInput {
-            flex: 1;
+            width: 100%;
             padding: 14px 18px;
             background: #1a1a1a;
             border: 1px solid #2d2d2d;
@@ -187,6 +263,42 @@
             color: #ffffff;
             outline: none;
             transition: border-color 0.2s, background-color 0.2s;
+            resize: none;
+            min-height: 48px;
+            max-height: 120px;
+        }
+
+        .attachment-button {
+            width: 48px;
+            height: 48px;
+            background: #2a2a2a;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            position: relative;
+        }
+
+        .attachment-button:hover {
+            background: #3a3a3a;
+            border-color: #4a4a4a;
+        }
+
+        .attachment-button svg {
+            width: 20px;
+            height: 20px;
+            color: #ffffff;
+        }
+
+        #fileInput {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
         }
 
         #messageInput::placeholder {
@@ -391,12 +503,23 @@
             <span></span>
         </div>
         <div class="input-container">
-            <input
-                type="text"
-                id="messageInput"
-                placeholder="Type your message here..."
-                autofocus
-            />
+            <div class="attachment-button" id="attachmentButton">
+                <input type="file" id="fileInput" multiple accept="image/*,application/pdf,.txt,.doc,.docx,.py,.js,.html,.css,.md">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 8v8"></path>
+                    <path d="M8 12h8"></path>
+                </svg>
+            </div>
+            <div class="input-wrapper">
+                <div class="attachment-preview" id="attachmentPreview"></div>
+                <textarea
+                    id="messageInput"
+                    placeholder="Type your message here..."
+                    autofocus
+                    rows="1"
+                ></textarea>
+            </div>
             <button id="sendButton">Send</button>
         </div>
         <div class="footer">
@@ -412,7 +535,10 @@
         const burgerMenu = document.getElementById('burgerMenu');
         const sideMenu = document.getElementById('sideMenu');
         const overlay = document.getElementById('overlay');
+        const fileInput = document.getElementById('fileInput');
+        const attachmentPreview = document.getElementById('attachmentPreview');
         let isFirstMessage = true;
+        let selectedFiles = [];
 
         // Burger menu functionality
         burgerMenu.addEventListener('click', () => {
@@ -521,11 +647,25 @@
 
         async function sendMessage() {
             const message = messageInput.value.trim();
-            if (!message) return;
+            if (!message && selectedFiles.length === 0) return;
+
+            // Create FormData for file upload
+            const formData = new FormData();
+            formData.append('message', message);
+
+            // Add files to FormData
+            selectedFiles.forEach((file, index) => {
+                formData.append(`files`, file);
+            });
 
             // Add user message
-            addMessage(message, true);
+            addMessage(message || '[Attachment]', true);
             messageInput.value = '';
+            selectedFiles = [];
+            updateAttachmentPreview();
+
+            // Reset textarea height
+            messageInput.style.height = 'auto';
 
             // Disable input while processing
             messageInput.disabled = true;
@@ -537,10 +677,7 @@
             try {
                 const response = await fetch('/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: message })
+                    body: formData
                 });
 
                 const data = await response.json();
@@ -559,6 +696,78 @@
                 messageInput.focus();
             }
         }
+
+        // File handling functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getFileIcon(mimeType) {
+            if (mimeType.startsWith('image/')) return '🖼️';
+            if (mimeType.includes('pdf')) return '📄';
+            if (mimeType.includes('text')) return '📝';
+            if (mimeType.includes('javascript')) return '📜';
+            if (mimeType.includes('python')) return '🐍';
+            return '📎';
+        }
+
+        function updateAttachmentPreview() {
+            if (selectedFiles.length === 0) {
+                attachmentPreview.classList.remove('show');
+                return;
+            }
+
+            attachmentPreview.classList.add('show');
+            attachmentPreview.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'attachment-item';
+                item.innerHTML = `
+                    <div class="attachment-icon">${getFileIcon(file.type)}</div>
+                    <div class="attachment-name">${file.name}</div>
+                    <div class="attachment-size">${formatFileSize(file.size)}</div>
+                    <button class="attachment-remove" onclick="removeFile(${index})">×</button>
+                `;
+                attachmentPreview.appendChild(item);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateAttachmentPreview();
+        }
+
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+
+            // Check file size limits (10MB max)
+            const maxSize = 10 * 1024 * 1024;
+            const validFiles = files.filter(file => {
+                if (file.size > maxSize) {
+                    alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+                    return false;
+                }
+                return true;
+            });
+
+            selectedFiles = [...selectedFiles, ...validFiles];
+            updateAttachmentPreview();
+
+            // Reset file input
+            fileInput.value = '';
+        });
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
 
         // Event listeners
         sendButton.addEventListener('click', sendMessage);
