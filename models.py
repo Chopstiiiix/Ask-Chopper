@@ -297,3 +297,26 @@ class UserActivity(db.Model):
             'activity_metadata': self.activity_metadata,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+class UserDownload(db.Model):
+    __tablename__ = 'user_downloads'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    pack_id = db.Column(db.Integer, db.ForeignKey('audio_packs.id'), nullable=False)
+    category = db.Column(db.String(50), default='Sound Pax')  # 'Beats', 'Sound Pax', 'Music'
+    downloaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='downloads')
+    pack = db.relationship('AudioPack', backref='user_downloads')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'pack_id': self.pack_id,
+            'category': self.category,
+            'downloaded_at': self.downloaded_at.isoformat() if self.downloaded_at else None,
+            'pack': self.pack.to_dict() if self.pack else None
+        }

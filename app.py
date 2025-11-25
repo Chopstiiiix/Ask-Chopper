@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from functools import wraps
 from werkzeug.utils import secure_filename
 from PIL import Image
-from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, UserTokens, AudioPack, AudioFile, UserActivity
+from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, UserTokens, AudioPack, AudioFile, UserActivity, UserDownload
 
 load_dotenv()
 
@@ -431,6 +431,29 @@ def spend_tokens():
         activity_metadata=f'{{"amount": {amount}}}'
     )
     db.session.add(activity)
+
+    # If downloading, save to UserDownload table
+    if reason == 'DOWNLOAD' and pack_id:
+        # Check if already downloaded
+        existing_download = UserDownload.query.filter_by(user_id=user_id, pack_id=pack_id).first()
+        if not existing_download:
+            # Determine category based on pack metadata
+            pack = AudioPack.query.get(pack_id)
+            category = 'Sound Pax'  # Default
+            if pack and pack.genre:
+                # Categorize based on genre
+                if pack.genre.lower() in ['hip-hop', 'trap', 'drill']:
+                    category = 'Beats'
+                elif pack.genre.lower() in ['pop', 'rock', 'jazz', 'r&b', 'afrobeats']:
+                    category = 'Music'
+
+            download = UserDownload(
+                user_id=user_id,
+                pack_id=pack_id,
+                category=category
+            )
+            db.session.add(download)
+
     db.session.commit()
 
     return jsonify({'balance': wallet.balance})
@@ -569,6 +592,42 @@ def beatpax_list():
     """Get all audio packs for the Beat Pax feed"""
     packs = AudioPack.query.order_by(AudioPack.created_at.desc()).all()
     return jsonify({'packs': [p.to_dict() for p in packs]})
+
+# ============ DOWNLOADS ROUTES ============
+
+@app.route('/downloads')
+@login_required
+def downloads():
+    """Downloads page - shows user's downloaded packs by category"""
+    return render_template('downloads.html')
+
+# API: Get user downloads categorized
+@app.route('/api/downloads/list', methods=['GET'])
+@login_required
+def downloads_list():
+    """Get all user downloads categorized by Beats, Sound Pax, Music"""
+    user_id = session.get('user_id')
+    downloads = UserDownload.query.filter_by(user_id=user_id).order_by(UserDownload.downloaded_at.desc()).all()
+
+    # Categorize downloads
+    beats = []
+    sound_pax = []
+    music = []
+
+    for download in downloads:
+        download_dict = download.to_dict()
+        if download.category == 'Beats':
+            beats.append(download_dict)
+        elif download.category == 'Music':
+            music.append(download_dict)
+        else:  # Default to Sound Pax
+            sound_pax.append(download_dict)
+
+    return jsonify({
+        'beats': beats,
+        'soundPax': sound_pax,
+        'music': music
+    })
 
 @app.route('/chat', methods=['POST'])
 @login_required
