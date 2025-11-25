@@ -168,3 +168,132 @@ class Feedback(db.Model):
             'additional_comments': self.additional_comments,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+class UserProfile(db.Model):
+    __tablename__ = 'user_profiles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    display_name = db.Column(db.String(100), nullable=False)
+    avatar_url = db.Column(db.String(500))
+    role = db.Column(db.String(50))
+    bio = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='profile')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'display_name': self.display_name,
+            'avatar_url': self.avatar_url,
+            'role': self.role,
+            'bio': self.bio,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class UserTokens(db.Model):
+    __tablename__ = 'user_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    balance = db.Column(db.Integer, nullable=False, default=0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='tokens')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'balance': self.balance,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class AudioPack(db.Model):
+    __tablename__ = 'audio_packs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    genre = db.Column(db.String(100))
+    bpm = db.Column(db.Integer)
+    musical_key = db.Column(db.String(10))
+    cover_url = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='audio_packs')
+    files = db.relationship('AudioFile', backref='pack', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'description': self.description,
+            'genre': self.genre,
+            'bpm': self.bpm,
+            'musical_key': self.musical_key,
+            'cover_url': self.cover_url,
+            'files_count': len(self.files),
+            'creator': self.user.first_name + ' ' + self.user.surname if self.user else 'Unknown',
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class AudioFile(db.Model):
+    __tablename__ = 'audio_files'
+
+    id = db.Column(db.Integer, primary_key=True)
+    pack_id = db.Column(db.Integer, db.ForeignKey('audio_packs.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    file_url = db.Column(db.String(500), nullable=False)
+    preview_url = db.Column(db.String(500))
+    duration_seconds = db.Column(db.Integer)
+    tokens_listen = db.Column(db.Integer, default=1)
+    tokens_download = db.Column(db.Integer, default=3)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'pack_id': self.pack_id,
+            'title': self.title,
+            'file_url': self.file_url,
+            'preview_url': self.preview_url,
+            'duration_seconds': self.duration_seconds,
+            'tokens_listen': self.tokens_listen,
+            'tokens_download': self.tokens_download,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class UserActivity(db.Model):
+    __tablename__ = 'user_activity'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'LISTEN', 'DOWNLOAD', 'UPLOAD', 'TOKEN_PURCHASE'
+    entity_id = db.Column(db.Integer)
+    entity_type = db.Column(db.String(50))  # 'PACK', 'FILE'
+    activity_metadata = db.Column(db.Text)  # JSON string
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='activities')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'type': self.type,
+            'entity_id': self.entity_id,
+            'entity_type': self.entity_type,
+            'activity_metadata': self.activity_metadata,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }

@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from functools import wraps
 from werkzeug.utils import secure_filename
 from PIL import Image
-from models import db, ChatMessage, MessageAttachment, User, Feedback
+from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, UserTokens, AudioPack, AudioFile, UserActivity
 
 load_dotenv()
 
@@ -349,6 +349,198 @@ def feedback():
             return render_template('feedback.html', error='An error occurred. Please try again.')
 
     return render_template('feedback.html')
+
+# ============ SOUNDS MARKETPLACE ROUTES ============
+
+@app.route('/sounds')
+@login_required
+def sounds():
+    """Main sounds marketplace page"""
+    return render_template('sounds.html')
+
+# API: Get token balance
+@app.route('/api/tokens/balance', methods=['GET'])
+@login_required
+def get_token_balance():
+    user_id = session.get('user_id')
+    wallet = UserTokens.query.filter_by(user_id=user_id).first()
+
+    if not wallet:
+        # Create wallet with initial balance
+        wallet = UserTokens(user_id=user_id, balance=100)
+        db.session.add(wallet)
+        db.session.commit()
+
+    return jsonify({'balance': wallet.balance})
+
+# API: Purchase tokens
+@app.route('/api/tokens/purchase', methods=['POST'])
+@login_required
+def purchase_tokens():
+    user_id = session.get('user_id')
+    data = request.get_json()
+    amount = data.get('amount', 0)
+
+    if amount <= 0:
+        return jsonify({'error': 'Invalid amount'}), 400
+
+    wallet = UserTokens.query.filter_by(user_id=user_id).first()
+    if not wallet:
+        wallet = UserTokens(user_id=user_id, balance=amount)
+        db.session.add(wallet)
+    else:
+        wallet.balance += amount
+
+    # Log activity
+    activity = UserActivity(
+        user_id=user_id,
+        type='TOKEN_PURCHASE',
+        activity_metadata=f'{{"amount": {amount}}}'
+    )
+    db.session.add(activity)
+    db.session.commit()
+
+    return jsonify({'balance': wallet.balance})
+
+# API: Spend tokens
+@app.route('/api/tokens/spend', methods=['POST'])
+@login_required
+def spend_tokens():
+    user_id = session.get('user_id')
+    data = request.get_json()
+    amount = data.get('amount', 0)
+    reason = data.get('reason', 'LISTEN')
+    pack_id = data.get('packId')
+    file_id = data.get('fileId')
+
+    if amount <= 0:
+        return jsonify({'error': 'Invalid amount'}), 400
+
+    wallet = UserTokens.query.filter_by(user_id=user_id).first()
+    if not wallet or wallet.balance < amount:
+        return jsonify({'error': 'Insufficient tokens'}), 400
+
+    wallet.balance -= amount
+
+    # Log activity
+    activity = UserActivity(
+        user_id=user_id,
+        type=reason,
+        entity_id=file_id if file_id else pack_id,
+        entity_type='FILE' if file_id else 'PACK',
+        activity_metadata=f'{{"amount": {amount}}}'
+    )
+    db.session.add(activity)
+    db.session.commit()
+
+    return jsonify({'balance': wallet.balance})
+
+# API: Get user activity
+@app.route('/api/activity/log', methods=['GET'])
+@login_required
+def get_activity():
+    user_id = session.get('user_id')
+    activities = UserActivity.query.filter_by(user_id=user_id).order_by(UserActivity.created_at.desc()).limit(20).all()
+
+    activities_list = []
+    for activity in activities:
+        label = f"{activity.type}"
+        if activity.type == 'TOKEN_PURCHASE':
+            label = "Purchased tokens"
+        elif activity.type == 'LISTEN':
+            label = "Listened to a track"
+        elif activity.type == 'DOWNLOAD':
+            label = "Downloaded a track"
+        elif activity.type == 'UPLOAD':
+            label = "Uploaded a pack"
+
+        activities_list.append({
+            'id': activity.id,
+            'type': activity.type,
+            'label': label,
+            'createdAt': activity.created_at.isoformat() if activity.created_at else None
+        })
+
+    return jsonify({'activities': activities_list})
+
+# API: List audio packs
+@app.route('/api/sounds/list', methods=['GET'])
+@login_required
+def list_packs():
+    # Get all packs ordered by creation date
+    packs = AudioPack.query.order_by(AudioPack.created_at.desc()).limit(20).all()
+
+    return jsonify({
+        'recommended': [p.to_dict() for p in packs[:10]],
+        'new': [p.to_dict() for p in packs]
+    })
+
+# API: Upload audio pack
+@app.route('/api/packs/upload', methods=['POST'])
+@login_required
+def upload_pack():
+    user_id = session.get('user_id')
+
+    title = request.form.get('title', '').strip()
+    genre = request.form.get('genre', '').strip()
+    bpm = request.form.get('bpm', type=int)
+    musical_key = request.form.get('musicalKey', '').strip()
+
+    if not title:
+        return jsonify({'error': 'Title is required'}), 400
+
+    # Handle cover upload
+    cover_url = None
+    if 'cover' in request.files:
+        cover_file = request.files['cover']
+        if cover_file.filename:
+            filename = secure_filename(cover_file.filename)
+            cover_path = os.path.join(app.config['UPLOAD_FOLDER'], 'covers', filename)
+            os.makedirs(os.path.dirname(cover_path), exist_ok=True)
+            cover_file.save(cover_path)
+            cover_url = f'/uploads/covers/{filename}'
+
+    # Create pack
+    pack = AudioPack(
+        user_id=user_id,
+        title=title,
+        genre=genre,
+        bpm=bpm,
+        musical_key=musical_key,
+        cover_url=cover_url
+    )
+    db.session.add(pack)
+    db.session.flush()
+
+    # Handle audio files
+    audio_files = request.files.getlist('audioFiles')
+    for audio_file in audio_files:
+        if audio_file.filename:
+            filename = secure_filename(audio_file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'audio', filename)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            audio_file.save(file_path)
+
+            audio_record = AudioFile(
+                pack_id=pack.id,
+                title=audio_file.filename,
+                file_url=f'/uploads/audio/{filename}',
+                tokens_listen=1,
+                tokens_download=3
+            )
+            db.session.add(audio_record)
+
+    # Log activity
+    activity = UserActivity(
+        user_id=user_id,
+        type='UPLOAD',
+        entity_id=pack.id,
+        entity_type='PACK'
+    )
+    db.session.add(activity)
+    db.session.commit()
+
+    return jsonify({'success': True, 'pack': pack.to_dict()})
 
 @app.route('/chat', methods=['POST'])
 @login_required
