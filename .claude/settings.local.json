@@ -5,7 +5,16 @@
       "Bash(python:*)",
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(pip3 install:*)",
+      "Bash(=1.109.0 flask)",
+      "Bash(=3.1.0 flask-cors)",
+      "Bash(=6.0.1 python-dotenv)",
+      "Bash(=1.1.1 SQLAlchemy==2.0.23 Flask-SQLAlchemy==3.1.1 Flask-Migrate==4.0.5 Werkzeug==3.1.3 Pillow)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
