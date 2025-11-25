@@ -542,6 +542,34 @@ def upload_pack():
 
     return jsonify({'success': True, 'pack': pack.to_dict()})
 
+# ============ BEAT PAX FEED & PROFILE ROUTES ============
+
+@app.route('/beatpax')
+@login_required
+def beatpax_feed():
+    """Beat Pax marketplace feed - shows all uploaded packs"""
+    return render_template('beatpax_feed.html')
+
+@app.route('/profile/<int:user_id>')
+@login_required
+def user_profile(user_id):
+    """User profile page showing their uploaded packs"""
+    user = User.query.get_or_404(user_id)
+    packs = AudioPack.query.filter_by(user_id=user_id).order_by(AudioPack.created_at.desc()).all()
+
+    # Calculate total files across all packs
+    total_files = sum(len(pack.files) for pack in packs)
+
+    return render_template('user_profile.html', user=user, packs=packs, total_files=total_files)
+
+# API: Get all packs for Beat Pax feed
+@app.route('/api/beatpax/list', methods=['GET'])
+@login_required
+def beatpax_list():
+    """Get all audio packs for the Beat Pax feed"""
+    packs = AudioPack.query.order_by(AudioPack.created_at.desc()).all()
+    return jsonify({'packs': [p.to_dict() for p in packs]})
+
 @app.route('/chat', methods=['POST'])
 @login_required
 def chat():
