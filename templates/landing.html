@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask Chopper - AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Söhne", Helvetica, Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #spline-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            border: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 1200px;
+            padding: 0 20px;
+        }
+
+        .hero-gradient {
+            position: absolute;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            filter: blur(30px);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+            background: linear-gradient(to right, #ffffff, #999999);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-content p {
+            font-size: 1.5rem;
+            color: #999999;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #000000;
+            background: #ffffff;
+            border: none;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Second Section - Placeholder */
+        .second-section {
+            position: relative;
+            padding: 120px 20px;
+            background: #0d0d0d;
+            text-align: center;
+        }
+
+        .second-section h2 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #ffffff;
+        }
+
+        .asset-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .asset-image {
+            width: 100%;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .asset-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 120px 20px;
+            background: #000000;
+        }
+
+        .benefits-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .benefits-section h2 {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4rem;
+            color: #ffffff;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .benefit-card {
+            background: #0d0d0d;
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid #2d2d2d;
+            transition: all 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            border-color: #ffffff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(255, 255, 255, 0.1);
+        }
+
+        .benefit-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+
+        .benefit-card p {
+            color: #999999;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: #0d0d0d;
+            padding: 60px 20px 40px;
+            border-top: 1px solid #2d2d2d;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 1rem;
+            color: #666666;
+            margin-bottom: 10px;
+        }
+
+        .footer-credits {
+            font-size: 0.9rem;
+            color: #999999;
+        }
+
+        .footer-credits strong {
+            color: #ffffff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-content p {
+                font-size: 1.2rem;
+            }
+
+            .benefits-section h2,
+            .second-section h2 {
+                font-size: 2rem;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section with Spline Background -->
+    <section class="hero-section">
+        <iframe id="spline-background" src='https://my.spline.design/animatedshapeblend-237acEf6FVMqRJR6ZBflcmby/' frameborder='0' width='100%' height='100%'></iframe>
+        <div class="hero-gradient"></div>
+        <div class="hero-content">
+            <h1>Ask Chopper</h1>
+            <p>Your Intelligent Assistant, Powered by OpenAI</p>
+            <a href="/register" class="cta-button">Get Started</a>
+        </div>
+    </section>
+
+    <!-- Second Section - Featured Image -->
+    <section class="second-section">
+        <h2>The Future is Now</h2>
+        <div class="asset-container">
+            <img src="/static/images/hands-on-keys.jpg" alt="Hands on keyboard" class="asset-image">
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits-section">
+        <div class="benefits-container">
+            <h2>Why Choose Ask Chopper?</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <h3>AI Assistant Integration</h3>
+                    <p>Powered by OpenAI's advanced Assistant API, delivering intelligent, context-aware responses to all your queries.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>Secure Authentication</h3>
+                    <p>Code-based login system ensures your conversations remain private and secure with session-based authentication.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>Real-time Chat Interface</h3>
+                    <p>Responsive chat UI with typing indicators provides a seamless, interactive conversation experience.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>Modern Dark Theme</h3>
+                    <p>Sleek, professional design that's easy on the eyes and provides an immersive experience.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>Mobile Responsive</h3>
+                    <p>Works seamlessly across all devices - desktop, tablet, and mobile for on-the-go assistance.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>Rich Text Formatting</h3>
+                    <p>Support for paragraphs, bold, italic, code blocks, and lists makes responses clear and organized.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>Fast & Lightweight</h3>
+                    <p>Minimal dependencies and optimized performance ensure quick response times and smooth interactions.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>Context-Aware</h3>
+                    <p>Maintains conversation history for coherent, context-driven interactions throughout your session.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <h3>File Attachments</h3>
+                    <p>Upload and share documents, images, and files directly in your conversations for enhanced collaboration.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">© 2025 Ask Chopper. All rights reserved.</p>
+            <p class="footer-credits">Designed and Coded by <strong>Chopstix</strong> • Powered by <strong>NAVADA</strong></p>
+        </div>
+    </footer>
+
+</body>
+</html>

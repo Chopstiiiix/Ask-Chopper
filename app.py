@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from functools import wraps
 from werkzeug.utils import secure_filename
 from PIL import Image
-from models import db, ChatMessage, MessageAttachment
+from models import db, ChatMessage, MessageAttachment, User
 
 load_dotenv()
 
@@ -181,6 +181,10 @@ def generate_response(prompt, conversation_history=None):
         return f"An error occurred: {str(e)}"
 
 @app.route('/')
+def landing():
+    return render_template('landing.html')
+
+@app.route('/app')
 def index():
     if not session.get('authenticated'):
         return redirect(url_for('login'))
@@ -191,28 +195,105 @@ def index():
 
     return render_template('index.html')
 
-@app.route('/login')
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if session.get('authenticated'):
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        first_name = request.form.get('first_name', '').strip()
+        surname = request.form.get('surname', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        phone_number = request.form.get('phone_number', '').strip()
+        age = request.form.get('age', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        # Validation
+        if not all([first_name, surname, email, phone_number, age, password, confirm_password]):
+            return render_template('register.html', error='All fields are required')
+
+        if password != confirm_password:
+            return render_template('register.html', error='Passwords do not match')
+
+        if len(password) < 8:
+            return render_template('register.html', error='Password must be at least 8 characters long')
+
+        try:
+            age_int = int(age)
+            if age_int < 13 or age_int > 120:
+                return render_template('register.html', error='Please enter a valid age (13-120)')
+        except ValueError:
+            return render_template('register.html', error='Please enter a valid age')
+
+        # Check if email already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return render_template('register.html', error='Email already registered. Please login instead.')
+
+        # Create new user
+        try:
+            new_user = User(
+                first_name=first_name,
+                surname=surname,
+                email=email,
+                phone_number=phone_number,
+                age=age_int
+            )
+            new_user.set_password(password)
+
+            db.session.add(new_user)
+            db.session.commit()
+
+            # Log user in
+            session['authenticated'] = True
+            session['user_id'] = new_user.id
+            session['user_name'] = f"{new_user.first_name} {new_user.surname}"
+            session['session_id'] = str(uuid.uuid4())
+
+            return redirect(url_for('index'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Registration error: {e}")
+            return render_template('register.html', error='An error occurred during registration. Please try again.')
+
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if session.get('authenticated'):
         return redirect(url_for('index'))
-    return render_template('login.html')
 
-@app.route('/verify', methods=['POST'])
-def verify():
-    code = request.form.get('code', '')
-    if code == VERIFICATION_CODE:
-        session['authenticated'] = True
-        # Create a unique session ID for this user session
-        if 'session_id' not in session:
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        if not email or not password:
+            return render_template('login.html', error='Email and password are required')
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            # Update last login
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+
+            # Log user in
+            session['authenticated'] = True
+            session['user_id'] = user.id
+            session['user_name'] = f"{user.first_name} {user.surname}"
             session['session_id'] = str(uuid.uuid4())
-        return redirect(url_for('index'))
-    else:
-        return redirect(url_for('login') + '?error=1')
+
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error='Invalid email or password')
+
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.pop('authenticated', None)
-    return redirect(url_for('login'))
+    session.clear()
+    return redirect(url_for('landing'))
 
 @app.route('/about')
 @login_required
