@@ -846,11 +846,19 @@ def chat_with_document():
     session_id = session.get('session_id', 'default')
     user_id = session.get('user_id')
 
-    if not user_message:
-        return jsonify({'error': 'No message provided'}), 400
+    # Require either message or files
+    if not user_message and not uploaded_files:
+        return jsonify({'error': 'Please provide a message or upload documents'}), 400
+
+    # If no message but files are uploaded, create default message
+    if not user_message and uploaded_files:
+        user_message = "Please analyze the uploaded documents."
 
     if not ASSISTANT_ID or not VECTOR_STORE_ID:
+        print(f"ERROR: Missing configuration - ASSISTANT_ID: {ASSISTANT_ID}, VECTOR_STORE_ID: {VECTOR_STORE_ID}")
         return jsonify({'error': 'Document RAG not configured. Please check environment variables.'}), 500
+
+    print(f"DEBUG: Processing document RAG request - Message: '{user_message[:50]}...', Files: {len(uploaded_files)}")
 
     try:
         # Get or create thread for this session
@@ -863,34 +871,47 @@ def chat_with_document():
         document_info = []
 
         if uploaded_files:
+            print(f"DEBUG: Processing {len(uploaded_files)} uploaded files")
             for file in uploaded_files:
                 if file and file.filename and allowed_document_file(file.filename):
+                    print(f"DEBUG: Processing file: {file.filename}")
                     try:
                         # Upload to OpenAI Files API
+                        print(f"DEBUG: Uploading {file.filename} to OpenAI...")
                         openai_file = client.files.create(
                             file=file,
                             purpose='assistants'
                         )
+                        print(f"DEBUG: OpenAI file created with ID: {openai_file.id}")
                         file_ids.append(openai_file.id)
 
                         # Add file to vector store
+                        print(f"DEBUG: Adding file to vector store {VECTOR_STORE_ID}...")
                         client.vector_stores.files.create(
                             vector_store_id=VECTOR_STORE_ID,
                             file_id=openai_file.id
                         )
+                        print(f"DEBUG: File added to vector store successfully")
 
                         # Reset file pointer before saving to database
                         file.seek(0)
 
                         # Save to database
+                        print(f"DEBUG: Saving document to database...")
                         doc = save_document_upload(user_id, session_id, file, openai_file.id)
                         if doc:
+                            print(f"DEBUG: Document saved: {doc.original_filename}")
                             document_info.append(f"- {doc.original_filename} ({doc.mime_type})")
+                        else:
+                            print(f"ERROR: Failed to save document to database")
 
                     except Exception as e:
-                        print(f"Error uploading document {file.filename}: {e}")
+                        print(f"ERROR uploading document {file.filename}: {e}")
                         import traceback
                         traceback.print_exc()
+                else:
+                    if file and file.filename:
+                        print(f"DEBUG: File {file.filename} rejected - not an allowed document type")
 
         # Create user message record
         user_msg = ChatMessage(
@@ -966,8 +987,10 @@ def chat_with_document():
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error in chat-with-document endpoint: {e}")
-        return jsonify({'error': 'An error occurred while processing your message with documents'}), 500
+        print(f"ERROR in chat-with-document endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
