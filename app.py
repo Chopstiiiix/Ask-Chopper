@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from functools import wraps
 from werkzeug.utils import secure_filename
 from PIL import Image
-from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, UserTokens, AudioPack, AudioFile, UserActivity, UserDownload
+from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, UserTokens, AudioPack, AudioFile, UserActivity, UserDownload, DocumentUpload
 
 load_dotenv()
 

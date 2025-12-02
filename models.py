@@ -50,6 +50,11 @@ class ChatMessage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     response_time_ms = db.Column(db.Integer)
 
+    # RAG/Document support fields
+    thread_id = db.Column(db.String(100))
+    run_id = db.Column(db.String(100))
+    has_document_context = db.Column(db.Boolean, default=False)
+
     # Relationship to attachments
     attachments = db.relationship('MessageAttachment', backref='message', lazy=True, cascade='all, delete-orphan')
 
@@ -320,3 +325,47 @@ class UserDownload(db.Model):
             'downloaded_at': self.downloaded_at.isoformat() if self.downloaded_at else None,
             'pack': self.pack.to_dict() if self.pack else None
         }
+
+class DocumentUpload(db.Model):
+    __tablename__ = 'document_uploads'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)
+    mime_type = db.Column(db.String(100))
+    openai_file_id = db.Column(db.String(100), unique=True)
+    vector_store_id = db.Column(db.String(100))
+    file_path = db.Column(db.String(500), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)
+    is_processed = db.Column(db.Boolean, default=False)
+
+    # Relationships
+    user = db.relationship('User', backref='document_uploads')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_id': self.session_id,
+            'filename': self.filename,
+            'original_filename': self.original_filename,
+            'file_size': self.file_size,
+            'mime_type': self.mime_type,
+            'openai_file_id': self.openai_file_id,
+            'vector_store_id': self.vector_store_id,
+            'uploaded_at': self.uploaded_at.isoformat() if self.uploaded_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'is_processed': self.is_processed
+        }
+
+    def delete_file(self):
+        """Delete the actual file from filesystem"""
+        try:
+            if os.path.exists(self.file_path):
+                os.remove(self.file_path)
+        except Exception as e:
+            print(f"Error deleting document file: {e}")

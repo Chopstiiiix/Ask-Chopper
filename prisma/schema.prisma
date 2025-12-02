@@ -9,35 +9,39 @@ datasource db {
 }
 
 model users {
-  id            Int              @id @default(autoincrement())
-  first_name    String
-  surname       String
-  email         String           @unique(map: "sqlite_autoindex_users_1")
-  phone_number  String
-  age           Int
-  password_hash String
-  created_at    DateTime?
-  last_login    DateTime?
-  feedback      feedback[]
-  profile       user_profiles?
-  tokens        user_tokens?
-  audio_packs   audio_packs[]
-  activities    user_activity[]
-  downloads     user_downloads[]
+  id               Int                @id @default(autoincrement())
+  first_name       String
+  surname          String
+  email            String             @unique(map: "sqlite_autoindex_users_1")
+  phone_number     String
+  age              Int
+  password_hash    String
+  created_at       DateTime?
+  last_login       DateTime?
+  feedback         feedback[]
+  profile          user_profiles?
+  tokens           user_tokens?
+  audio_packs      audio_packs[]
+  activities       user_activity[]
+  downloads        user_downloads[]
+  document_uploads document_uploads[]
 }
 
 model chat_messages {
-  id                  Int                   @id @default(autoincrement())
-  session_id          String
-  message_type        String
-  content             String
-  formatted_content   String?
-  has_attachments     Boolean?
-  openai_thread_id    String?
-  openai_message_id   String?
-  created_at          DateTime?
-  response_time_ms    Int?
-  message_attachments message_attachments[]
+  id                   Int                   @id @default(autoincrement())
+  session_id           String
+  message_type         String
+  content              String
+  formatted_content    String?
+  has_attachments      Boolean?
+  openai_thread_id     String?
+  openai_message_id    String?
+  created_at           DateTime?
+  response_time_ms     Int?
+  thread_id            String?
+  run_id               String?
+  has_document_context Boolean?              @default(false)
+  message_attachments  message_attachments[]
 }
 
 model message_attachments {
@@ -146,4 +150,21 @@ model user_downloads {
   downloaded_at DateTime?
   user          users       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   pack          audio_packs @relation(fields: [pack_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model document_uploads {
+  id                Int       @id @default(autoincrement())
+  user_id           Int
+  session_id        String
+  filename          String
+  original_filename String
+  file_size         Int
+  mime_type         String?
+  openai_file_id    String?   @unique
+  vector_store_id   String?
+  file_path         String
+  uploaded_at       DateTime  @default(now())
+  expires_at        DateTime?
+  is_processed      Boolean?  @default(false)
+  user              users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
