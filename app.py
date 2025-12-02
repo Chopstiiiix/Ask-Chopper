@@ -879,6 +879,9 @@ def chat_with_document():
                             file_id=openai_file.id
                         )
 
+                        # Reset file pointer before saving to database
+                        file.seek(0)
+
                         # Save to database
                         doc = save_document_upload(user_id, session_id, file, openai_file.id)
                         if doc:
@@ -886,6 +889,8 @@ def chat_with_document():
 
                     except Exception as e:
                         print(f"Error uploading document {file.filename}: {e}")
+                        import traceback
+                        traceback.print_exc()
 
         # Create user message record
         user_msg = ChatMessage(
