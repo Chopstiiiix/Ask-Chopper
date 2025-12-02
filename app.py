@@ -878,12 +878,16 @@ def chat_with_document():
                     try:
                         # Upload to OpenAI Files API
                         print(f"DEBUG: Uploading {file.filename} to OpenAI...")
+                        # OpenAI expects (filename, file_bytes) tuple
                         openai_file = client.files.create(
-                            file=file,
+                            file=(file.filename, file.read(), file.content_type),
                             purpose='assistants'
                         )
                         print(f"DEBUG: OpenAI file created with ID: {openai_file.id}")
                         file_ids.append(openai_file.id)
+
+                        # Reset file pointer for later use
+                        file.seek(0)
 
                         # Add file to vector store
                         print(f"DEBUG: Adding file to vector store {VECTOR_STORE_ID}...")
