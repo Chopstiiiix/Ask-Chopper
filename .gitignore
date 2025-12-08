@@ -50,3 +50,8 @@ node_modules/
 /tmp/
 instance/
 uploads/
+
+# Test files
+cookies.txt
+login_cookies.txt
+*_cookies.txt
