@@ -459,60 +459,6 @@
             background: #1a1a1a;
         }
 
-        .menu-item {
-            display: block;
-            color: #ffffff;
-            padding: 15px 25px;
-            text-decoration: none;
-            font-size: 15px;
-            transition: background 0.2s;
-            border-bottom: 1px solid #1a1a1a;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .menu-item:hover {
-            background: #1a1a1a;
-        }
-
-        .menu-item.expandable::after {
-            content: '▼';
-            position: absolute;
-            right: 20px;
-            font-size: 10px;
-            transition: transform 0.3s;
-        }
-
-        .menu-item.expandable.open::after {
-            transform: rotate(-180deg);
-        }
-
-        .submenu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background: #0d0d0d;
-        }
-
-        .submenu.open {
-            max-height: 200px;
-        }
-
-        .submenu a {
-            display: block;
-            color: #cccccc;
-            padding: 12px 25px 12px 45px;
-            text-decoration: none;
-            font-size: 14px;
-            transition: background 0.2s;
-            border-bottom: 1px solid #1a1a1a;
-        }
-
-        .submenu a:hover {
-            background: #1a1a1a;
-            color: #ffffff;
-        }
-
         .overlay {
             position: fixed;
             top: 0;
@@ -641,14 +587,6 @@
 <body>
     <div class="side-menu" id="sideMenu">
         <a href="/">Chat</a>
-        <div>
-            <div class="menu-item expandable" id="beatPaxMenu">Beat Pax</div>
-            <div class="submenu" id="beatPaxSubmenu">
-                <a href="/beatpax">Browse Beat Pax</a>
-                <a href="/sounds">My Uploads</a>
-                <a href="/downloads">Downloads</a>
-            </div>
-        </div>
         <a href="/about">About</a>
         <a href="/feedback">Feedback</a>
         <a href="/logout" style="margin-top: auto; border-top: 1px solid #2d2d2d;">Logout</a>
@@ -731,15 +669,6 @@
             burgerMenu.classList.remove('active');
             sideMenu.classList.remove('active');
             overlay.classList.remove('active');
-        });
-
-        // Beat Pax submenu toggle
-        const beatPaxMenu = document.getElementById('beatPaxMenu');
-        const beatPaxSubmenu = document.getElementById('beatPaxSubmenu');
-
-        beatPaxMenu.addEventListener('click', () => {
-            beatPaxMenu.classList.toggle('open');
-            beatPaxSubmenu.classList.toggle('open');
         });
 
         // Document mode toggle
