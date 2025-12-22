@@ -100,7 +100,7 @@
             text-decoration: none;
             transition: all 0.3s ease;
             cursor: pointer;
-            margin-top: 500px;
+            margin-top: 550px;
         }
 
         .cta-button:hover {
@@ -236,20 +236,20 @@
             }
 
             .hero-content p {
-                font-size: 1rem;
+                font-size: 0.9rem;
             }
 
             .cta-button {
-                margin-top: 350px;
+                margin-top: 520px;
             }
 
             #spline-background {
-                width: 120%;
-                height: 80%;
-                min-height: auto;
-                top: 55%;
+                width: 100vw;
+                height: 100vh;
+                min-height: 100vh;
+                top: 50%;
                 left: 50%;
-                transform: translate(-50%, -50%) scale(0.8);
+                transform: translate(-50%, -50%);
                 -webkit-overflow-scrolling: touch;
             }
 
@@ -266,18 +266,23 @@
         /* iPhone specific optimizations */
         @media (max-width: 430px) {
             #spline-background {
-                width: 100%;
-                height: 70%;
-                transform: translate(-50%, -50%) scale(0.7);
-                top: 60%;
+                width: 100vw;
+                height: 100vh;
+                transform: translate(-50%, -50%);
+                top: 50%;
+                left: 50%;
             }
 
             .hero-content {
                 margin-top: 40px;
             }
 
+            .hero-content p {
+                font-size: 0.85rem;
+            }
+
             .cta-button {
-                margin-top: 300px;
+                margin-top: 480px;
             }
         }
     </style>
