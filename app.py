@@ -282,6 +282,51 @@ def save_document_upload(user_id, session_id, file, chroma_doc_id, chunk_count):
         db.session.rollback()
         return None
 
+
+def save_document_upload_with_content(user_id, session_id, original_filename, content_type, file_content, chroma_doc_id, chunk_count):
+    """Save document upload record to database and Vercel Blob storage using raw bytes content"""
+    try:
+        filename = generate_unique_filename(original_filename)
+        mime_type = content_type or mimetypes.guess_type(original_filename)[0] or 'application/octet-stream'
+        file_size = len(file_content)
+
+        # Upload to Vercel Blob (or fallback to local storage)
+        if blob_storage.is_blob_configured():
+            # Upload bytes directly to Blob storage
+            blob_path = blob_storage.generate_blob_path('documents', filename)
+            file_url = blob_storage.upload_bytes(file_content, blob_path, mime_type)
+            file_path = file_url  # Store blob URL
+        else:
+            # Fallback to local storage (for development)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', filename)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'wb') as f:
+                f.write(file_content)
+
+        # Create database record
+        doc = DocumentUpload(
+            user_id=user_id,
+            session_id=session_id,
+            filename=filename,
+            original_filename=original_filename,
+            file_size=file_size,
+            mime_type=mime_type,
+            chroma_doc_id=chroma_doc_id,
+            chunk_count=chunk_count,
+            file_path=file_path  # Blob URL or local path
+        )
+        db.session.add(doc)
+        db.session.commit()
+
+        print(f"DEBUG: Document saved to {file_path} ({file_size} bytes)")
+        return doc
+    except Exception as e:
+        print(f"Error saving document upload: {e}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return None
+
 def process_assistant_response(messages_data):
     """Process assistant response and handle citations"""
     try:
@@ -705,10 +750,22 @@ def chat_with_document():
                 if file and file.filename and allowed_document_file(file.filename):
                     print(f"DEBUG: Processing file: {file.filename}, content_type: {file.content_type}")
                     try:
+                        # Read file content into memory FIRST (before any processing)
+                        file.seek(0)
+                        file_content = file.read()
+                        file_size = len(file_content)
+                        print(f"DEBUG: Read {file_size} bytes from {file.filename}")
+
+                        # Create a file-like object for processing
+                        import io
+                        file_stream = io.BytesIO(file_content)
+                        file_stream.filename = file.filename
+                        file_stream.content_type = file.content_type
+
                         # Process document: extract text, chunk, generate embeddings
                         print(f"DEBUG: Step 1 - Extracting and processing {file.filename}...")
                         doc_id, chunks, embeddings = process_document(
-                            file, user_id, session_id
+                            file_stream, user_id, session_id
                         )
                         print(f"DEBUG: Step 1 complete - doc_id={doc_id}, chunks={len(chunks)}, embeddings={len(embeddings)}")
 
@@ -724,16 +781,11 @@ def chat_with_document():
                         )
                         print(f"DEBUG: Step 2 complete - Added {chunk_count} chunks to ChromaDB")
 
-                        # Reset file pointer before saving to Blob/local storage
-                        try:
-                            file.seek(0)
-                        except Exception:
-                            pass  # Some file objects don't support seek after read
-
-                        # Save to database and Blob storage
+                        # Save to database and Blob storage using the preserved content
                         print(f"DEBUG: Step 3 - Saving document to database...")
-                        doc = save_document_upload(
-                            user_id, session_id, file, doc_id, chunk_count
+                        doc = save_document_upload_with_content(
+                            user_id, session_id, file.filename, file.content_type,
+                            file_content, doc_id, chunk_count
                         )
                         if doc:
                             print(f"DEBUG: Document saved: {doc.original_filename}")
