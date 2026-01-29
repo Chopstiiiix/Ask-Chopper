@@ -14,6 +14,13 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, DocumentUpload
 import blob_storage
+from chroma_client import (
+    get_collection, add_document_chunks, query_documents,
+    delete_document, delete_user_documents
+)
+from document_processor import (
+    process_document, generate_query_embedding, build_context_prompt
+)
 
 load_dotenv()
 
@@ -44,10 +51,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Connection pooling for PostgreSQL (serverless optimization)
 if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgresql://'):
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_size': 5,
-        'pool_recycle': 300,
-        'pool_pre_ping': True,
-        'max_overflow': 10
+        'pool_size': 3,
+        'pool_recycle': 60,  # Recycle connections every 60 seconds
+        'pool_pre_ping': True,  # Check connection health before use
+        'max_overflow': 5,
+        'pool_timeout': 30,
+        'connect_args': {
+            'connect_timeout': 10,
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5
+        }
     }
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -58,11 +73,26 @@ CORS(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+def db_commit_with_retry(max_retries=3):
+    """Commit database changes with retry logic for connection errors."""
+    for attempt in range(max_retries):
+        try:
+            db.session.commit()
+            return True
+        except Exception as e:
+            error_str = str(e).lower()
+            if 'ssl' in error_str or 'connection' in error_str or 'closed' in error_str:
+                print(f"DB commit attempt {attempt + 1} failed: {e}")
+                db.session.rollback()
+                if attempt < max_retries - 1:
+                    # Close and recreate the connection
+                    db.session.remove()
+                    time.sleep(0.5)  # Brief delay before retry
+                    continue
+            raise
+    return False
 
-# Assistant and Vector Store configuration
-ASSISTANT_ID = os.environ.get("OPENAI_ASSISTANT_ID")
-VECTOR_STORE_ID = os.environ.get("OPENAI_VECTOR_STORE_ID")
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 # Verification code
 VERIFICATION_CODE = "1234567890"
@@ -210,7 +240,7 @@ def get_or_create_thread(session_id):
         print(f"Error getting/creating thread: {e}")
         return None
 
-def save_document_upload(user_id, session_id, file, openai_file_id):
+def save_document_upload(user_id, session_id, file, chroma_doc_id, chunk_count):
     """Save document upload record to database and Vercel Blob storage"""
     try:
         filename = generate_unique_filename(file.filename)
@@ -237,8 +267,8 @@ def save_document_upload(user_id, session_id, file, openai_file_id):
             original_filename=file.filename,
             file_size=file_size,
             mime_type=mime_type,
-            openai_file_id=openai_file_id,
-            vector_store_id=VECTOR_STORE_ID,
+            chroma_doc_id=chroma_doc_id,
+            chunk_count=chunk_count,
             file_path=file_path  # Blob URL or local path
         )
         db.session.add(doc)
@@ -307,7 +337,33 @@ def generate_response(prompt, conversation_history=None):
         messages = [
             {
                 "role": "system",
-                "content": "You are Chopper, an AI assistant that helps users with various tasks. Always be helpful, accurate, and concise."
+                "content": """You are Chopper, an AI assistant created for Ask Chopper. You help users with various tasks. Always be helpful, accurate, and concise.
+
+IMPORTANT: You have special knowledge about Chopstix, the music producer who created this app. When users ask about Chopstix, use this information:
+
+About Chopstix (Music Producer):
+- Full Name: Olagundoye James Malcolm, known professionally as Chopstix
+- Born: April 8th in Jos, Plateau State, Nigeria
+- Education: St. Murumba Secondary School in Jos (same school as PSquare), University of Jos
+- Started playing bass and piano in church and high school
+
+Career Highlights:
+- Grammy Award-winning and 4x Platinum-certified record producer
+- Was part of Grip Boiz (with Yung L, Endia, J Milla) until 2016
+- 2012: Produced Ice Prince's "Aboki" and "More" from Fire of Zamani album
+- 2014: Nominated for Best Music Producer at City People Music Awards
+- 2015: Produced Burna Boy's "Rockstar" (first single under Spaceship Entertainment)
+- Co-produced and co-wrote Burna Boy's Grammy-nominated album "African Giant"
+- 2022: Co-produced Burna Boy's hit single "Last Last"
+- 2024: Chris Brown's album "11:11" (which Chopstix contributed to) won Best R&B Album at 67th Grammy Awards
+- 2025: Released joint album "OXYTOCIN" with Yaadman fka Yung L
+- 2025: Produced Ice Prince's EP "Starters"
+
+Notable Productions: Fire of Zamani, African Giant, Love Damini, Outside (Burna Boy), Lagos to London, The Guy, No Guts No Glory (Phyno), and many more.
+
+Musical Influences: Timbaland, DJ Premier
+
+For more information: https://en.wikipedia.org/wiki/Chopstix_(music_producer)"""
             }
         ]
 
@@ -352,6 +408,10 @@ def generate_response(prompt, conversation_history=None):
 @app.route('/')
 def landing():
     return render_template('landing.html')
+
+@app.route('/player-test')
+def player_test():
+    return render_template('player_test.html')
 
 @app.route('/app')
 def index():
@@ -594,19 +654,26 @@ def chat():
         )
 
         db.session.add(assistant_msg)
-        db.session.commit()
+
+        try:
+            db_commit_with_retry()
+        except Exception as commit_error:
+            print(f"WARNING: Failed to save assistant message to DB: {commit_error}")
+            # Continue anyway - the response should still be returned to user
 
         return jsonify({'response': ai_response})
 
     except Exception as e:
         db.session.rollback()
         print(f"Error in chat endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': 'An error occurred while processing your message'}), 500
 
 @app.route('/chat-with-document', methods=['POST'])
 @login_required
 def chat_with_document():
-    """Chat endpoint with document RAG support using OpenAI Assistants API"""
+    """Chat endpoint with document RAG support using ChromaDB"""
     start_time = time.time()
 
     user_message = request.form.get('message', '').strip()
@@ -620,70 +687,80 @@ def chat_with_document():
 
     # If no message but files are uploaded, create default message
     if not user_message and uploaded_files:
-        user_message = "Please analyze the uploaded documents."
-
-    if not ASSISTANT_ID or not VECTOR_STORE_ID:
-        print(f"ERROR: Missing configuration - ASSISTANT_ID: {ASSISTANT_ID}, VECTOR_STORE_ID: {VECTOR_STORE_ID}")
-        return jsonify({'error': 'Document RAG not configured. Please check environment variables.'}), 500
+        user_message = "Please read this document and provide a comprehensive summary. Explain what it's about, highlight the key points, and identify any important information."
 
     print(f"DEBUG: Processing document RAG request - Message: '{user_message[:50]}...', Files: {len(uploaded_files)}")
+    print(f"DEBUG: user_id={user_id}, session_id={session_id}")
 
     try:
-        # Get or create thread for this session
-        thread_id = get_or_create_thread(session_id)
-        if not thread_id:
-            return jsonify({'error': 'Failed to create conversation thread'}), 500
-
         # Process uploaded documents
-        file_ids = []
         document_info = []
+        processed_doc_ids = []
+        processing_errors = []
 
         if uploaded_files:
             print(f"DEBUG: Processing {len(uploaded_files)} uploaded files")
             for file in uploaded_files:
+                print(f"DEBUG: Checking file: {file.filename if file else 'None'}, allowed: {allowed_document_file(file.filename) if file and file.filename else 'N/A'}")
                 if file and file.filename and allowed_document_file(file.filename):
-                    print(f"DEBUG: Processing file: {file.filename}")
+                    print(f"DEBUG: Processing file: {file.filename}, content_type: {file.content_type}")
                     try:
-                        # Upload to OpenAI Files API
-                        print(f"DEBUG: Uploading {file.filename} to OpenAI...")
-                        # OpenAI expects (filename, file_bytes) tuple
-                        openai_file = client.files.create(
-                            file=(file.filename, file.read(), file.content_type),
-                            purpose='assistants'
+                        # Process document: extract text, chunk, generate embeddings
+                        print(f"DEBUG: Step 1 - Extracting and processing {file.filename}...")
+                        doc_id, chunks, embeddings = process_document(
+                            file, user_id, session_id
                         )
-                        print(f"DEBUG: OpenAI file created with ID: {openai_file.id}")
-                        file_ids.append(openai_file.id)
+                        print(f"DEBUG: Step 1 complete - doc_id={doc_id}, chunks={len(chunks)}, embeddings={len(embeddings)}")
 
-                        # Reset file pointer for later use
-                        file.seek(0)
-
-                        # Add file to vector store
-                        print(f"DEBUG: Adding file to vector store {VECTOR_STORE_ID}...")
-                        client.vector_stores.files.create(
-                            vector_store_id=VECTOR_STORE_ID,
-                            file_id=openai_file.id
+                        # Store chunks in ChromaDB
+                        print(f"DEBUG: Step 2 - Adding chunks to ChromaDB...")
+                        chunk_count = add_document_chunks(
+                            doc_id=doc_id,
+                            chunks=chunks,
+                            embeddings=embeddings,
+                            user_id=user_id,
+                            session_id=session_id,
+                            filename=file.filename
                         )
-                        print(f"DEBUG: File added to vector store successfully")
+                        print(f"DEBUG: Step 2 complete - Added {chunk_count} chunks to ChromaDB")
 
-                        # Reset file pointer before saving to database
-                        file.seek(0)
+                        # Reset file pointer before saving to Blob/local storage
+                        try:
+                            file.seek(0)
+                        except Exception:
+                            pass  # Some file objects don't support seek after read
 
-                        # Save to database
-                        print(f"DEBUG: Saving document to database...")
-                        doc = save_document_upload(user_id, session_id, file, openai_file.id)
+                        # Save to database and Blob storage
+                        print(f"DEBUG: Step 3 - Saving document to database...")
+                        doc = save_document_upload(
+                            user_id, session_id, file, doc_id, chunk_count
+                        )
                         if doc:
                             print(f"DEBUG: Document saved: {doc.original_filename}")
                             document_info.append(f"- {doc.original_filename} ({doc.mime_type})")
+                            processed_doc_ids.append(doc_id)
                         else:
                             print(f"ERROR: Failed to save document to database")
+                            # Clean up ChromaDB chunks if database save failed
+                            delete_document(doc_id)
+                            processing_errors.append(f"{file.filename}: Failed to save")
 
+                    except ValueError as e:
+                        # Document extraction or processing failed
+                        error_msg = str(e)
+                        print(f"ERROR processing document {file.filename}: {error_msg}")
+                        processing_errors.append(f"{file.filename}: {error_msg}")
                     except Exception as e:
-                        print(f"ERROR uploading document {file.filename}: {e}")
+                        error_msg = str(e)
+                        print(f"ERROR processing document {file.filename}: {error_msg}")
                         import traceback
                         traceback.print_exc()
+                        # Include the actual error message for debugging
+                        processing_errors.append(f"{file.filename}: {error_msg}")
                 else:
                     if file and file.filename:
                         print(f"DEBUG: File {file.filename} rejected - not an allowed document type")
+                        processing_errors.append(f"{file.filename}: Unsupported file type")
 
         # Create user message record
         user_msg = ChatMessage(
@@ -691,71 +768,142 @@ def chat_with_document():
             message_type='user',
             content=user_message,
             has_attachments=len(document_info) > 0,
-            thread_id=thread_id,
-            has_document_context=len(file_ids) > 0
+            has_document_context=len(processed_doc_ids) > 0
         )
         db.session.add(user_msg)
         db.session.flush()
 
-        # Build message content
-        message_content = user_message
-        if document_info:
-            message_content += f"\n\n[Uploaded documents:\n" + "\n".join(document_info) + "]"
+        # Query ChromaDB for relevant context
+        retrieved_chunks = []
+        retrieved_metadata = []
 
-        # Add message to thread
-        client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message_content,
-            attachments=[{"file_id": fid, "tools": [{"type": "file_search"}]} for fid in file_ids]
+        try:
+            print(f"DEBUG: Generating query embedding...")
+            query_embedding = generate_query_embedding(user_message)
+
+            print(f"DEBUG: Querying ChromaDB for relevant chunks...")
+            results = query_documents(
+                query_embedding=query_embedding,
+                user_id=user_id,
+                session_id=session_id,
+                n_results=10  # Retrieve more chunks for better context
+            )
+
+            retrieved_chunks = results.get("documents", [])
+            retrieved_metadata = results.get("metadatas", [])
+            print(f"DEBUG: Retrieved {len(retrieved_chunks)} relevant chunks")
+        except Exception as e:
+            print(f"ERROR querying ChromaDB: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # Build context-augmented prompt
+        context_prompt = build_context_prompt(user_message, retrieved_chunks)
+
+        # If we have processed documents but no retrieved chunks, inform the user
+        if processed_doc_ids and not retrieved_chunks:
+            print(f"WARNING: Documents were processed but no chunks retrieved from ChromaDB")
+            context_prompt = f"""The user has uploaded documents ({', '.join(document_info)}) but I couldn't retrieve their content.
+Please let the user know there was an issue processing their document and ask them to try uploading again.
+
+User's message: {user_message}"""
+
+        # Build conversation history
+        conversation_history = []
+        previous_messages = ChatMessage.query.filter_by(
+            session_id=session_id
+        ).order_by(ChatMessage.created_at).limit(10).all()
+
+        for msg in previous_messages:
+            if msg.message_type == 'user':
+                conversation_history.append({
+                    "role": "user",
+                    "content": msg.content
+                })
+            elif msg.message_type == 'assistant':
+                clean_content = msg.content.replace("[Chopper]: ", "")
+                conversation_history.append({
+                    "role": "assistant",
+                    "content": clean_content
+                })
+
+        # Generate response using Chat Completions API
+        messages = [
+            {
+                "role": "system",
+                "content": """You are Chopper, an AI assistant that helps users understand, analyze, and explain their documents.
+
+Your capabilities with documents:
+- Summarize document contents clearly and comprehensively
+- Explain complex topics found in documents in simple terms
+- Answer specific questions about document content
+- Identify key points, themes, and important information
+- Compare and contrast information when multiple documents are provided
+
+Guidelines:
+- Always base your answers on the provided document content
+- When asked to explain or summarize, be thorough but clear
+- Use bullet points or numbered lists for complex information
+- If the document content doesn't contain information to answer a question, say so clearly
+- Quote relevant passages when helpful
+- If the user just uploads a document without a specific question, provide a helpful summary of what the document contains"""
+            }
+        ]
+        messages.extend(conversation_history)
+        messages.append({"role": "user", "content": context_prompt})
+
+        print(f"DEBUG: Calling OpenAI Chat Completions API...")
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1500
         )
 
-        # Run the assistant
-        run = client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=ASSISTANT_ID
-        )
+        response_text = f"[Chopper]: {response.choices[0].message.content}"
 
-        # Wait for completion
-        max_wait_time = 30  # seconds
-        poll_interval = 0.5  # seconds
-        elapsed_time = 0
-
-        while run.status in ['queued', 'in_progress'] and elapsed_time < max_wait_time:
-            time.sleep(poll_interval)
-            elapsed_time += poll_interval
-            run = client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run.id)
-
-        if run.status != 'completed':
-            return jsonify({'error': f'Assistant run did not complete. Status: {run.status}'}), 500
-
-        # Get the assistant's response
-        messages = client.beta.threads.messages.list(thread_id=thread_id, limit=1)
-        response_text, citations = process_assistant_response(messages)
-
-        if not response_text:
-            return jsonify({'error': 'Failed to process assistant response'}), 500
+        # Build citations from retrieved metadata
+        citations = []
+        seen_files = set()
+        for meta in retrieved_metadata:
+            filename = meta.get("filename", "Unknown")
+            if filename not in seen_files:
+                citations.append({
+                    "doc_id": meta.get("doc_id"),
+                    "file_name": filename,
+                    "chunk_index": meta.get("chunk_index")
+                })
+                seen_files.add(filename)
 
         # Create assistant message record
         assistant_msg = ChatMessage(
             session_id=session_id,
             message_type='assistant',
             content=response_text,
-            thread_id=thread_id,
-            run_id=run.id,
-            has_document_context=len(citations) > 0,
+            has_document_context=len(retrieved_chunks) > 0,
             response_time_ms=int((time.time() - start_time) * 1000)
         )
         db.session.add(assistant_msg)
-        db.session.commit()
 
-        return jsonify({
+        try:
+            db_commit_with_retry()
+        except Exception as commit_error:
+            print(f"WARNING: Failed to save assistant message to DB: {commit_error}")
+            # Continue anyway - the response should still be returned to user
+
+        # Include processing errors in response if any
+        response_data = {
             'response': response_text,
             'citations': citations,
-            'thread_id': thread_id,
-            'run_id': run.id,
-            'has_document_context': len(citations) > 0
-        })
+            'has_document_context': len(retrieved_chunks) > 0,
+            'documents_processed': len(processed_doc_ids)
+        }
+
+        if processing_errors:
+            response_data['processing_errors'] = processing_errors
+            print(f"DEBUG: Document processing errors: {processing_errors}")
+
+        return jsonify(response_data)
 
     except Exception as e:
         db.session.rollback()
@@ -763,6 +911,154 @@ def chat_with_document():
         import traceback
         traceback.print_exc()
         return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+
+
+# =============================================================================
+# Document Management Endpoints
+# =============================================================================
+
+@app.route('/api/documents', methods=['GET'])
+@login_required
+def list_documents():
+    """List all documents for the current user's session"""
+    user_id = session.get('user_id')
+    session_id = session.get('session_id', 'default')
+
+    try:
+        documents = DocumentUpload.query.filter_by(
+            user_id=user_id,
+            session_id=session_id
+        ).order_by(DocumentUpload.uploaded_at.desc()).all()
+
+        return jsonify({
+            'documents': [doc.to_dict() for doc in documents],
+            'count': len(documents)
+        })
+    except Exception as e:
+        print(f"Error listing documents: {e}")
+        return jsonify({'error': 'Failed to list documents'}), 500
+
+
+@app.route('/api/documents/<int:doc_id>', methods=['DELETE'])
+@login_required
+def delete_document_endpoint(doc_id):
+    """Delete a specific document"""
+    user_id = session.get('user_id')
+
+    try:
+        # Get document from database
+        document = DocumentUpload.query.filter_by(
+            id=doc_id,
+            user_id=user_id
+        ).first()
+
+        if not document:
+            return jsonify({'error': 'Document not found'}), 404
+
+        chroma_doc_id = document.chroma_doc_id
+        file_path = document.file_path
+        filename = document.original_filename
+
+        # Delete chunks from ChromaDB
+        if chroma_doc_id:
+            chunks_deleted = delete_document(chroma_doc_id)
+            print(f"Deleted {chunks_deleted} chunks from ChromaDB for doc {chroma_doc_id}")
+
+        # Delete file from Vercel Blob or local storage
+        if file_path:
+            if blob_storage.is_blob_configured() and file_path.startswith('http'):
+                # Delete from Blob storage
+                try:
+                    blob_storage.delete_file(file_path)
+                    print(f"Deleted file from Blob storage: {file_path}")
+                except Exception as e:
+                    print(f"Error deleting from Blob storage: {e}")
+            elif os.path.exists(file_path):
+                # Delete local file
+                os.remove(file_path)
+                print(f"Deleted local file: {file_path}")
+
+        # Delete database record
+        db.session.delete(document)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Document "{filename}" deleted successfully'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting document: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to delete document'}), 500
+
+
+@app.route('/api/documents/clear', methods=['DELETE'])
+@login_required
+def clear_session_documents():
+    """Clear all documents for the current session"""
+    user_id = session.get('user_id')
+    session_id = session.get('session_id', 'default')
+
+    try:
+        # Get all documents for this session
+        documents = DocumentUpload.query.filter_by(
+            user_id=user_id,
+            session_id=session_id
+        ).all()
+
+        if not documents:
+            return jsonify({
+                'success': True,
+                'message': 'No documents to clear',
+                'deleted_count': 0
+            })
+
+        deleted_count = 0
+
+        for document in documents:
+            try:
+                # Delete chunks from ChromaDB
+                if document.chroma_doc_id:
+                    delete_document(document.chroma_doc_id)
+
+                # Delete file from storage
+                if document.file_path:
+                    if blob_storage.is_blob_configured() and document.file_path.startswith('http'):
+                        try:
+                            blob_storage.delete_file(document.file_path)
+                        except Exception as e:
+                            print(f"Error deleting from Blob: {e}")
+                    elif os.path.exists(document.file_path):
+                        os.remove(document.file_path)
+
+                # Delete database record
+                db.session.delete(document)
+                deleted_count += 1
+
+            except Exception as e:
+                print(f"Error deleting document {document.id}: {e}")
+
+        # Also clear all chunks from ChromaDB for this session (safety cleanup)
+        delete_user_documents(user_id, session_id)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Cleared {deleted_count} documents',
+            'deleted_count': deleted_count
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error clearing documents: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to clear documents'}), 500
+
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):

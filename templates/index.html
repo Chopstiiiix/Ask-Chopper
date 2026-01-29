@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ask Chopper</title>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -54,6 +56,13 @@
             overflow-y: auto;
             padding: 24px;
             background: #0d0d0d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container.empty {
+            justify-content: center;
+            align-items: center;
         }
 
         .chat-container::-webkit-scrollbar {
@@ -279,7 +288,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
             position: relative;
         }
 
@@ -288,10 +297,28 @@
             border-color: #4a4a4a;
         }
 
-        .attachment-button svg {
+        /* Lucide Icon Base Styles */
+        .lucide-icon {
             width: 20px;
             height: 20px;
             color: #ffffff;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Paperclip Icon Animation - Rotate on hover */
+        .attachment-button:hover .lucide-icon {
+            transform: rotate(-45deg) scale(1.1);
+        }
+
+        .attachment-button.animating .lucide-icon {
+            animation: paperclipBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes paperclipBounce {
+            0% { transform: rotate(0deg) scale(1); }
+            30% { transform: rotate(-60deg) scale(0.8); }
+            60% { transform: rotate(-30deg) scale(1.2); }
+            100% { transform: rotate(0deg) scale(1); }
         }
 
         #fileInput {
@@ -312,16 +339,19 @@
         }
 
         #sendButton {
-            padding: 14px 24px;
+            padding: 14px;
             background: #ffffff;
             color: #000000;
             border: none;
             border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s, opacity 0.2s;
-            min-width: 80px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
         #sendButton:hover {
@@ -332,7 +362,33 @@
             opacity: 0.4;
             cursor: not-allowed;
             background: #4a4a4a;
-            color: #1a1a1a;
+        }
+
+        #sendButton:disabled .lucide-icon {
+            transform: none !important;
+        }
+
+        /* Send Icon Animation - Fly out on hover */
+        #sendButton .lucide-icon {
+            width: 20px;
+            height: 20px;
+            color: #000000;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #sendButton:not(:disabled):hover .lucide-icon {
+            transform: translateX(3px) translateY(-3px) rotate(-12deg);
+        }
+
+        #sendButton.animating .lucide-icon {
+            animation: sendFlyOut 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes sendFlyOut {
+            0% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
+            40% { transform: translateX(30px) translateY(-30px) scale(0.5); opacity: 0; }
+            41% { transform: translateX(-30px) translateY(30px) scale(0.5); opacity: 0; }
+            100% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
         }
 
         .typing-indicator {
@@ -381,13 +437,10 @@
         .welcome-message {
             text-align: center;
             color: #888888;
-            padding: 60px 40px;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        .welcome-message br {
-            margin-bottom: 8px;
+            padding: 40px;
+            font-size: 16px;
+            line-height: 1.8;
+            max-width: 400px;
         }
 
         .footer {
@@ -405,27 +458,60 @@
             top: 20px;
             cursor: pointer;
             z-index: 1000;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .burger-menu:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .burger-menu span {
             display: block;
-            width: 25px;
+            width: 22px;
             height: 2px;
             background: #ffffff;
             margin: 5px 0;
-            transition: 0.3s;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        opacity 0.3s ease,
+                        width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
         }
 
+        /* Hover animation - lines stagger */
+        .burger-menu:hover span:nth-child(1) {
+            transform: translateX(3px);
+        }
+
+        .burger-menu:hover span:nth-child(2) {
+            width: 18px;
+        }
+
+        .burger-menu:hover span:nth-child(3) {
+            transform: translateX(3px);
+        }
+
+        /* Active state - X animation */
         .burger-menu.active span:nth-child(1) {
             transform: rotate(45deg) translate(5px, 5px);
         }
 
         .burger-menu.active span:nth-child(2) {
             opacity: 0;
+            transform: scaleX(0);
         }
 
         .burger-menu.active span:nth-child(3) {
             transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        .burger-menu.active:hover span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px) scale(1.1);
+        }
+
+        .burger-menu.active:hover span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px) scale(1.1);
         }
 
         .side-menu {
@@ -446,17 +532,30 @@
         }
 
         .side-menu a {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             color: #ffffff;
             padding: 15px 25px;
             text-decoration: none;
             font-size: 15px;
-            transition: background 0.2s;
+            transition: background 0.2s, padding-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             border-bottom: 1px solid #1a1a1a;
         }
 
         .side-menu a:hover {
             background: #1a1a1a;
+            padding-left: 30px;
+        }
+
+        .side-menu a .lucide-icon {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .side-menu a:hover .lucide-icon {
+            transform: scale(1.2);
         }
 
         .overlay {
@@ -474,58 +573,34 @@
             display: block;
         }
 
-        .mode-toggle {
-            display: flex;
+        .doc-mode-indicator {
+            display: none;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: #1a1a1a;
-            border: 1px solid #2d2d2d;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #1a3a5c 0%, #1a1a1a 100%);
+            border: 1px solid #4a9eff;
             border-radius: 8px;
             margin-bottom: 8px;
-            font-size: 13px;
+            font-size: 12px;
+            color: #4a9eff;
+            animation: fadeIn 0.3s ease-in;
         }
 
-        .mode-toggle label {
-            color: #888888;
-            font-weight: 500;
-            cursor: pointer;
-            user-select: none;
+        .doc-mode-indicator.show {
+            display: flex;
         }
 
-        .mode-switch {
-            position: relative;
-            width: 44px;
-            height: 24px;
-            background: #2a2a2a;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background 0.3s;
+        .doc-mode-indicator .lucide-icon {
+            width: 14px;
+            height: 14px;
+            color: #4a9eff;
+            animation: docPulse 2s ease-in-out infinite;
         }
 
-        .mode-switch.active {
-            background: #4a9eff;
-        }
-
-        .mode-switch::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background: #ffffff;
-            border-radius: 50%;
-            transition: left 0.3s;
-        }
-
-        .mode-switch.active::after {
-            left: 22px;
-        }
-
-        .mode-label {
-            color: #e3e3e3;
-            font-weight: 600;
+        @keyframes docPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
         }
 
         .citations {
@@ -586,10 +661,10 @@
 </head>
 <body>
     <div class="side-menu" id="sideMenu">
-        <a href="/">Chat</a>
-        <a href="/about">About</a>
-        <a href="/feedback">Feedback</a>
-        <a href="/logout" style="margin-top: auto; border-top: 1px solid #2d2d2d;">Logout</a>
+        <a href="/"><i data-lucide="message-circle" class="lucide-icon"></i> Chat</a>
+        <a href="/about"><i data-lucide="info" class="lucide-icon"></i> About</a>
+        <a href="/feedback"><i data-lucide="message-square" class="lucide-icon"></i> Feedback</a>
+        <a href="/logout"><i data-lucide="log-out" class="lucide-icon"></i> Logout</a>
     </div>
     <div class="overlay" id="overlay"></div>
     <div class="container">
@@ -601,7 +676,7 @@
             </div>
             <h1>Ask Chopper</h1>
         </div>
-        <div class="chat-container" id="chatContainer">
+        <div class="chat-container empty" id="chatContainer">
             <div class="welcome-message">
                 Welcome to Ask Chopper!<br>
                 How can I help you today?
@@ -613,19 +688,14 @@
             <span></span>
         </div>
         <div class="input-container">
-            <div class="attachment-button" id="attachmentButton">
-                <input type="file" id="fileInput" multiple accept="image/*,application/pdf,.txt,.doc,.docx,.py,.js,.html,.css,.md">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 8v8"></path>
-                    <path d="M8 12h8"></path>
-                </svg>
+            <div class="attachment-button" id="attachmentButton" aria-label="Attach files">
+                <input type="file" id="fileInput" multiple accept="application/pdf,.pdf,.txt,.doc,.docx,.md,.py,.js,.json,.csv,.xml,.html,.css,.yml,.yaml,text/plain,text/markdown,text/html,text/css,text/csv,application/json,application/xml">
+                <i data-lucide="paperclip" class="lucide-icon"></i>
             </div>
             <div class="input-wrapper">
-                <div class="mode-toggle">
-                    <label for="documentMode">Document RAG</label>
-                    <div class="mode-switch" id="modeSwitch"></div>
-                    <span class="mode-label" id="modeLabel">Off</span>
+                <div class="doc-mode-indicator" id="docModeIndicator">
+                    <i data-lucide="file-text" class="lucide-icon"></i>
+                    <span>Document mode active - I'll analyze your files</span>
                 </div>
                 <div class="attachment-preview" id="attachmentPreview"></div>
                 <textarea
@@ -635,7 +705,9 @@
                     rows="1"
                 ></textarea>
             </div>
-            <button id="sendButton">Send</button>
+            <button id="sendButton" aria-label="Send message">
+                <i data-lucide="send" class="lucide-icon"></i>
+            </button>
         </div>
         <div class="footer">
             Designed & Built by Chopstix and Lee
@@ -652,11 +724,28 @@
         const overlay = document.getElementById('overlay');
         const fileInput = document.getElementById('fileInput');
         const attachmentPreview = document.getElementById('attachmentPreview');
-        const modeSwitch = document.getElementById('modeSwitch');
-        const modeLabel = document.getElementById('modeLabel');
+        const attachmentButton = document.getElementById('attachmentButton');
+        const docModeIndicator = document.getElementById('docModeIndicator');
         let isFirstMessage = true;
         let selectedFiles = [];
-        let documentMode = false;
+
+        // Document file extensions that trigger RAG mode
+        const documentExtensions = ['pdf', 'txt', 'doc', 'docx', 'md', 'py', 'js', 'json', 'csv', 'xml', 'html', 'css'];
+
+        function hasDocumentFiles() {
+            return selectedFiles.some(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return documentExtensions.includes(ext);
+            });
+        }
+
+        function updateDocModeIndicator() {
+            if (hasDocumentFiles()) {
+                docModeIndicator.classList.add('show');
+            } else {
+                docModeIndicator.classList.remove('show');
+            }
+        }
 
         // Burger menu functionality
         burgerMenu.addEventListener('click', () => {
@@ -671,17 +760,6 @@
             overlay.classList.remove('active');
         });
 
-        // Document mode toggle
-        modeSwitch.addEventListener('click', () => {
-            documentMode = !documentMode;
-            modeSwitch.classList.toggle('active');
-            modeLabel.textContent = documentMode ? 'On' : 'Off';
-
-            // Update placeholder text
-            messageInput.placeholder = documentMode
-                ? 'Ask questions about your documents...'
-                : 'Type your message here...';
-        });
 
         function addMessage(content, isUser, citations = null, hasDocContext = false) {
             if (isFirstMessage) {
@@ -689,6 +767,7 @@
                 if (welcomeMessage) {
                     welcomeMessage.remove();
                 }
+                chatContainer.classList.remove('empty');
                 isFirstMessage = false;
             }
 
@@ -799,8 +878,9 @@
             const message = messageInput.value.trim();
             if (!message && selectedFiles.length === 0) return;
 
-            // Determine which endpoint to use
-            const endpoint = documentMode ? '/chat-with-document' : '/chat';
+            // Automatically determine which endpoint to use based on attached files
+            const useDocumentMode = hasDocumentFiles();
+            const endpoint = useDocumentMode ? '/chat-with-document' : '/chat';
 
             // Create FormData for file upload
             const formData = new FormData();
@@ -820,6 +900,12 @@
             // Reset textarea height
             messageInput.style.height = 'auto';
 
+            // Trigger send animation
+            sendButton.classList.add('animating');
+            setTimeout(() => {
+                sendButton.classList.remove('animating');
+            }, 1200);
+
             // Disable input while processing
             messageInput.disabled = true;
             sendButton.disabled = true;
@@ -837,10 +923,16 @@
 
                 if (response.ok) {
                     // Handle document mode response with citations
-                    if (documentMode && data.citations) {
+                    if (useDocumentMode && data.citations) {
                         addMessage(data.response, false, data.citations, data.has_document_context);
                     } else {
                         addMessage(data.response, false);
+                    }
+
+                    // Show processing errors if any
+                    if (data.processing_errors && data.processing_errors.length > 0) {
+                        const errorMsg = 'Document processing issues:\n' + data.processing_errors.join('\n');
+                        addMessage(errorMsg, false);
                     }
                 } else {
                     addMessage('Error: ' + (data.error || 'Unknown error occurred'), false);
@@ -874,6 +966,8 @@
         }
 
         function updateAttachmentPreview() {
+            updateDocModeIndicator();
+
             if (selectedFiles.length === 0) {
                 attachmentPreview.classList.remove('show');
                 return;
@@ -914,6 +1008,14 @@
                 return true;
             });
 
+            // Trigger paperclip animation if files were added
+            if (validFiles.length > 0) {
+                attachmentButton.classList.add('animating');
+                setTimeout(() => {
+                    attachmentButton.classList.remove('animating');
+                }, 600);
+            }
+
             selectedFiles = [...selectedFiles, ...validFiles];
             updateAttachmentPreview();
 
@@ -940,6 +1042,9 @@
         window.addEventListener('load', () => {
             messageInput.focus();
         });
+
+        // Initialize Lucide icons
+        lucide.createIcons();
     </script>
 </body>
 </html>
