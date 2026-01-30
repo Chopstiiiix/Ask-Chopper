@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Ask Chopper</title>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Söhne", Helvetica, Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: #0d0d0d;
+            border-bottom: 1px solid #2d2d2d;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .admin-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-header h1 .lucide-icon {
+            width: 22px;
+            height: 22px;
+            color: #4a9eff;
+        }
+
+        .admin-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .admin-nav a {
+            color: #888888;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .admin-nav a:hover {
+            color: #ffffff;
+        }
+
+        .admin-nav a .lucide-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #0d0d0d;
+            border: 1px solid #2d2d2d;
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .stat-card h3 {
+            font-size: 12px;
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .stat-card .value.highlight {
+            color: #4a9eff;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .conversations-list {
+            background: #0d0d0d;
+            border: 1px solid #2d2d2d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #1a1a1a;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .conversation-item:hover {
+            background: #1a1a1a;
+        }
+
+        .conversation-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #4a9eff 0%, #1a3a5c 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            color: #ffffff;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .conversation-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conversation-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .conversation-preview {
+            font-size: 13px;
+            color: #888888;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-meta {
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: 15px;
+        }
+
+        .conversation-time {
+            font-size: 12px;
+            color: #666666;
+            margin-bottom: 6px;
+        }
+
+        .unread-badge {
+            background: #ff4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666666;
+        }
+
+        .empty-state .lucide-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 15px;
+            color: #4a4a4a;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-bar {
+                flex-direction: column;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .conversation-item {
+                flex-wrap: wrap;
+            }
+
+            .conversation-meta {
+                width: 100%;
+                text-align: left;
+                margin-left: 60px;
+                margin-top: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="admin-header">
+        <h1><i data-lucide="shield" class="lucide-icon"></i> Admin Dashboard</h1>
+        <nav class="admin-nav">
+            <a href="/"><i data-lucide="home" class="lucide-icon"></i> Back to App</a>
+            <a href="/logout"><i data-lucide="log-out" class="lucide-icon"></i> Logout</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="stats-bar">
+            <div class="stat-card">
+                <h3>Total Conversations</h3>
+                <div class="value">{{ user_data|length }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Unread Messages</h3>
+                <div class="value highlight">{{ total_unread }}</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">User Conversations</h2>
+
+        <div class="conversations-list">
+            {% if user_data %}
+                {% for data in user_data %}
+                <a href="/admin/chat/{{ data.user.id }}" class="conversation-item">
+                    <div class="user-avatar">
+                        {{ data.user.first_name[0] }}{{ data.user.surname[0] }}
+                    </div>
+                    <div class="conversation-info">
+                        <div class="conversation-name">
+                            {{ data.user.first_name }} {{ data.user.surname }}
+                        </div>
+                        <div class="conversation-preview">
+                            {% if data.last_message %}
+                                {% if data.last_message.sender_type == 'admin' %}You: {% endif %}
+                                {{ data.last_message.message[:50] }}{% if data.last_message.message|length > 50 %}...{% endif %}
+                            {% else %}
+                                No messages yet
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="conversation-meta">
+                        {% if data.last_message %}
+                        <div class="conversation-time">
+                            {{ data.last_message.created_at.strftime('%b %d, %H:%M') }}
+                        </div>
+                        {% endif %}
+                        {% if data.unread_count > 0 %}
+                        <span class="unread-badge">{{ data.unread_count }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i data-lucide="inbox" class="lucide-icon"></i>
+                    <p>No conversations yet.<br>When users send support messages, they'll appear here.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Auto-refresh unread count
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/admin/unread-count');
+                const data = await response.json();
+                // Could update UI here if needed
+            } catch (e) {
+                console.error('Error fetching unread count:', e);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -372,6 +372,16 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('authenticated'):
+            return redirect(url_for('login'))
+        if not session.get('is_admin'):
+            return redirect(url_for('app_home'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def generate_response(prompt, conversation_history=None):
     """Generate a response using OpenAI Chat Completions API."""
     if not os.environ.get("OPENAI_API_KEY"):
@@ -557,6 +567,11 @@ def login():
             session['user_id'] = user.id
             session['user_name'] = f"{user.first_name} {user.surname}"
             session['session_id'] = str(uuid.uuid4())
+            session['is_admin'] = user.is_admin or False
+
+            # Redirect admin to admin dashboard
+            if user.is_admin:
+                return redirect(url_for('admin_dashboard'))
 
             return redirect(url_for('index'))
         else:
@@ -739,6 +754,115 @@ def get_unread_count():
     except Exception as e:
         print(f"Error fetching unread count: {e}")
         return jsonify({'error': 'Failed to fetch unread count'}), 500
+
+# Admin Panel Routes
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    """Admin dashboard showing all user conversations"""
+    try:
+        # Get all users who have sent support messages
+        users_with_chats = db.session.query(User).join(SupportChat).distinct().all()
+
+        # Get unread counts per user
+        user_data = []
+        for user in users_with_chats:
+            unread_count = SupportChat.query.filter_by(
+                user_id=user.id,
+                sender_type='user',
+                is_read=False
+            ).count()
+            last_message = SupportChat.query.filter_by(user_id=user.id).order_by(
+                SupportChat.created_at.desc()
+            ).first()
+            user_data.append({
+                'user': user,
+                'unread_count': unread_count,
+                'last_message': last_message
+            })
+
+        # Sort by unread count (descending) then by last message time
+        user_data.sort(key=lambda x: (-(x['unread_count']),
+                                       -(x['last_message'].created_at.timestamp() if x['last_message'] else 0)))
+
+        # Get total unread count
+        total_unread = SupportChat.query.filter_by(sender_type='user', is_read=False).count()
+
+        return render_template('admin/dashboard.html',
+                             user_data=user_data,
+                             total_unread=total_unread)
+    except Exception as e:
+        print(f"Admin dashboard error: {e}")
+        return render_template('admin/dashboard.html', user_data=[], total_unread=0)
+
+@app.route('/admin/chat/<int:user_id>')
+@admin_required
+def admin_user_chat(user_id):
+    """View and respond to a specific user's chat"""
+    try:
+        user = User.query.get_or_404(user_id)
+        messages = SupportChat.query.filter_by(user_id=user_id).order_by(
+            SupportChat.created_at.asc()
+        ).all()
+
+        # Mark user messages as read
+        unread = SupportChat.query.filter_by(
+            user_id=user_id,
+            sender_type='user',
+            is_read=False
+        ).all()
+        for msg in unread:
+            msg.is_read = True
+        if unread:
+            db.session.commit()
+
+        return render_template('admin/chat.html', user=user, messages=messages)
+    except Exception as e:
+        print(f"Admin chat error: {e}")
+        return redirect(url_for('admin_dashboard'))
+
+@app.route('/api/admin/reply', methods=['POST'])
+@admin_required
+def admin_reply():
+    """Send a reply to a user"""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        message_text = data.get('message', '').strip()
+
+        if not user_id or not message_text:
+            return jsonify({'error': 'User ID and message are required'}), 400
+
+        # Verify user exists
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        chat_msg = SupportChat(
+            user_id=user_id,
+            sender_type='admin',
+            message=message_text
+        )
+
+        db.session.add(chat_msg)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': chat_msg.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Admin reply error: {e}")
+        return jsonify({'error': 'Failed to send reply'}), 500
+
+@app.route('/api/admin/unread-count')
+@admin_required
+def admin_unread_count():
+    """Get total unread message count for admin"""
+    try:
+        count = SupportChat.query.filter_by(sender_type='user', is_read=False).count()
+        return jsonify({'unread_count': count})
+    except Exception as e:
+        print(f"Error fetching admin unread count: {e}")
+        return jsonify({'error': 'Failed to fetch count'}), 500
 
 @app.route('/chat', methods=['POST'])
 @login_required

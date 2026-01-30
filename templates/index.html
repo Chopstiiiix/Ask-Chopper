@@ -956,6 +956,9 @@
         <a href="/about"><i data-lucide="info" class="lucide-icon"></i> About</a>
         <a href="/feedback"><i data-lucide="message-square" class="lucide-icon"></i> Feedback</a>
         <a href="/contact"><i data-lucide="mail" class="lucide-icon"></i> Contact</a>
+        {% if session.get('is_admin') %}
+        <a href="/admin" style="color: #4a9eff;"><i data-lucide="shield" class="lucide-icon"></i> Admin</a>
+        {% endif %}
         <a href="/logout"><i data-lucide="log-out" class="lucide-icon"></i> Logout</a>
     </div>
     <div class="overlay" id="overlay"></div>
