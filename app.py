@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from functools import wraps
 from werkzeug.utils import secure_filename
 from PIL import Image
-from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, DocumentUpload
+from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, DocumentUpload, AdminMessage
 import blob_storage
 from chroma_client import (
     get_collection, add_document_chunks, query_documents,
@@ -623,6 +623,62 @@ def feedback():
             return render_template('feedback.html', error='An error occurred. Please try again.')
 
     return render_template('feedback.html')
+
+@app.route('/contact', methods=['GET', 'POST'])
+@login_required
+def contact():
+    """Contact page for users to send messages to admin"""
+    if request.method == 'POST':
+        try:
+            subject = request.form.get('subject', '').strip()
+            message = request.form.get('message', '').strip()
+
+            if not subject or not message:
+                return render_template('contact.html', error='Please fill in all fields.')
+
+            admin_msg = AdminMessage(
+                user_id=session.get('user_id'),
+                subject=subject,
+                message=message
+            )
+
+            db.session.add(admin_msg)
+            db.session.commit()
+
+            return render_template('contact.html', success=True)
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Contact form error: {e}")
+            return render_template('contact.html', error='An error occurred. Please try again.')
+
+    return render_template('contact.html')
+
+@app.route('/api/messages', methods=['GET'])
+@login_required
+def get_user_messages():
+    """Get all messages sent by the current user"""
+    try:
+        user_id = session.get('user_id')
+        messages = AdminMessage.query.filter_by(user_id=user_id).order_by(AdminMessage.created_at.desc()).all()
+        return jsonify({'messages': [msg.to_dict() for msg in messages]})
+    except Exception as e:
+        print(f"Error fetching messages: {e}")
+        return jsonify({'error': 'Failed to fetch messages'}), 500
+
+@app.route('/api/messages/<int:message_id>', methods=['GET'])
+@login_required
+def get_message(message_id):
+    """Get a specific message"""
+    try:
+        user_id = session.get('user_id')
+        message = AdminMessage.query.filter_by(id=message_id, user_id=user_id).first()
+        if not message:
+            return jsonify({'error': 'Message not found'}), 404
+        return jsonify(message.to_dict())
+    except Exception as e:
+        print(f"Error fetching message: {e}")
+        return jsonify({'error': 'Failed to fetch message'}), 500
 
 @app.route('/chat', methods=['POST'])
 @login_required

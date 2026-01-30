@@ -664,6 +664,41 @@
             font-weight: 600;
             margin-bottom: 6px;
         }
+
+        /* Contact Button - Bottom Left aligned with burger menu */
+        .contact-button {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            padding: 10px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .contact-button:hover {
+            background: #2d2d2d;
+            border-color: #4a4a4a;
+            transform: scale(1.1);
+        }
+
+        .contact-button .lucide-icon {
+            width: 20px;
+            height: 20px;
+            color: #ffffff;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .contact-button:hover .lucide-icon {
+            transform: rotate(-15deg);
+        }
     </style>
 </head>
 <body>
@@ -671,9 +706,16 @@
         <a href="/"><i data-lucide="message-circle" class="lucide-icon"></i> Chat</a>
         <a href="/about"><i data-lucide="info" class="lucide-icon"></i> About</a>
         <a href="/feedback"><i data-lucide="message-square" class="lucide-icon"></i> Feedback</a>
+        <a href="/contact"><i data-lucide="mail" class="lucide-icon"></i> Contact</a>
         <a href="/logout"><i data-lucide="log-out" class="lucide-icon"></i> Logout</a>
     </div>
     <div class="overlay" id="overlay"></div>
+
+    <!-- Contact Button - Bottom Left -->
+    <a href="/contact" class="contact-button" title="Contact Us">
+        <i data-lucide="mail" class="lucide-icon"></i>
+    </a>
+
     <div class="container">
         <div class="header">
             <div class="burger-menu" id="burgerMenu">
