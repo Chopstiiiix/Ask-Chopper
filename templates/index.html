@@ -33,6 +33,71 @@
             position: relative;
         }
 
+        /* Initial state - centered input */
+        .container.initial-state {
+            justify-content: center;
+        }
+
+        .container.initial-state .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .container.initial-state .chat-container {
+            display: none;
+        }
+
+        .container.initial-state .typing-indicator {
+            display: none !important;
+        }
+
+        .container.initial-state .input-container {
+            border-top: none;
+            padding: 24px;
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .container.initial-state .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        /* Smooth transition when switching from initial to chat state */
+        .container .chat-container,
+        .container .input-container,
+        .container .welcome-title {
+            transition: all 0.3s ease-out;
+        }
+
+        /* Welcome title for initial state */
+        .welcome-title {
+            text-align: center;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .container.initial-state .welcome-title {
+            display: block;
+        }
+
+        .welcome-title h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .welcome-title p {
+            font-size: 16px;
+            color: #888888;
+        }
+
         .header {
             background: #000000;
             color: #ffffff;
@@ -1077,7 +1142,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="container initial-state" id="mainContainer">
         <div class="header">
             <div class="burger-menu" id="burgerMenu">
                 <span></span>
@@ -1086,11 +1151,11 @@
             </div>
             <h1>Ask Chopper</h1>
         </div>
-        <div class="chat-container empty" id="chatContainer">
-            <div class="welcome-message">
-                Welcome to Ask Chopper!<br>
-                How can I help you today?
-            </div>
+        <div class="chat-container" id="chatContainer">
+        </div>
+        <div class="welcome-title">
+            <h2>How can I help you today?</h2>
+            <p>Ask anything or upload documents to get started</p>
         </div>
         <div class="typing-indicator" id="typingIndicator">
             <span></span>
@@ -1138,6 +1203,7 @@
     </div>
 
     <script>
+        const mainContainer = document.getElementById('mainContainer');
         const chatContainer = document.getElementById('chatContainer');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
@@ -1186,11 +1252,8 @@
 
         function addMessage(content, isUser, citations = null, hasDocContext = false) {
             if (isFirstMessage) {
-                const welcomeMessage = chatContainer.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    welcomeMessage.remove();
-                }
-                chatContainer.classList.remove('empty');
+                // Transition from initial centered state to full chat state
+                mainContainer.classList.remove('initial-state');
                 isFirstMessage = false;
             }
 
