@@ -1154,7 +1154,7 @@
         <div class="chat-container" id="chatContainer">
         </div>
         <div class="welcome-title">
-            <h2>How can I help you today?</h2>
+            <h2 id="greetingText"></h2>
             <p>Ask anything or upload documents to get started</p>
         </div>
         <div class="typing-indicator" id="typingIndicator">
@@ -1717,6 +1717,31 @@
         // Check for unread messages on page load and periodically
         updateUnreadBadge();
         setInterval(updateUnreadBadge, 30000); // Check every 30 seconds
+
+        // Set personalized greeting based on time of day
+        function setGreeting() {
+            const hour = new Date().getHours();
+            let greeting;
+
+            if (hour >= 5 && hour < 12) {
+                greeting = 'Good morning';
+            } else if (hour >= 12 && hour < 17) {
+                greeting = 'Good afternoon';
+            } else {
+                greeting = 'Good evening';
+            }
+
+            const userName = '{{ session.get("user_name", "").split()[0] if session.get("user_name") else "" }}';
+            const greetingText = document.getElementById('greetingText');
+
+            if (userName) {
+                greetingText.textContent = `${greeting} ${userName}, how can I help you today?`;
+            } else {
+                greetingText.textContent = `${greeting}, how can I help you today?`;
+            }
+        }
+
+        setGreeting();
 
         // Initialize Lucide icons
         lucide.createIcons();
