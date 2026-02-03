@@ -42,19 +42,14 @@
         }
 
         .logo {
-            font-size: 20px;
-            font-weight: 700;
-            color: #ffffff;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 8px;
         }
 
-        .logo .lucide-icon {
-            width: 24px;
-            height: 24px;
-            color: #4a9eff;
+        .logo img {
+            height: 32px;
+            width: auto;
         }
 
         .search-box {
@@ -1844,8 +1839,7 @@
     <div class="top-bar">
         <div class="top-bar-left">
             <a href="/beatpax" class="logo">
-                <i data-lucide="disc-3" class="lucide-icon"></i>
-                Beatpax
+                <img src="{{ url_for('static', filename='images/beatpax-logo.png') }}" alt="Beatpax">
             </a>
             <div class="search-box">
                 <i data-lucide="search" class="lucide-icon"></i>
