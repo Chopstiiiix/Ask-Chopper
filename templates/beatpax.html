@@ -1379,6 +1379,13 @@
             border: 1px solid #2d2d2d;
             border-radius: 12px;
             padding: 20px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .lower-section:hover {
+            border-color: #3d3d3d;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
         .lower-section-title {
@@ -1399,7 +1406,8 @@
         .lower-beat-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 0;
+            position: relative;
         }
 
         .lower-beat-item {
@@ -1410,11 +1418,57 @@
             background: #1a1a1a;
             border-radius: 8px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: margin-top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        background 0.2s,
+                        box-shadow 0.3s ease;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Stacked card effect - collapsed state */
+        .lower-beat-item:nth-child(1) {
+            z-index: 5;
+            margin-top: 0;
+        }
+
+        .lower-beat-item:nth-child(2) {
+            z-index: 4;
+            margin-top: -44px;
+            transform: scaleX(0.95);
+        }
+
+        .lower-beat-item:nth-child(3) {
+            z-index: 3;
+            margin-top: -44px;
+            transform: scaleX(0.90);
+        }
+
+        .lower-beat-item:nth-child(4) {
+            z-index: 2;
+            margin-top: -44px;
+            transform: scaleX(0.85);
+        }
+
+        .lower-beat-item:nth-child(5) {
+            z-index: 1;
+            margin-top: -44px;
+            transform: scaleX(0.80);
+        }
+
+        /* Expanded state on hover */
+        .lower-section:hover .lower-beat-item {
+            margin-top: 8px;
+            transform: scaleX(1);
+        }
+
+        .lower-section:hover .lower-beat-item:nth-child(1) {
+            margin-top: 0;
         }
 
         .lower-beat-item:hover {
             background: #2d2d2d;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         }
 
         .lower-beat-cover {
