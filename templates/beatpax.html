@@ -58,10 +58,11 @@
             60% { transform: scale(1); }
         }
 
-        .track-action-btn.liked .lucide-icon,
+        .like-btn.liked .lucide-icon,
         .player-action-btn.liked .lucide-icon {
             animation: heartBeat 0.6s ease-in-out;
             color: #ff4757;
+            fill: #ff4757;
         }
 
         /* Download bounce animation */
@@ -1117,12 +1118,12 @@
             color: #fff;
         }
 
-        .track-action-btn.liked {
+        .like-btn.liked {
             color: #ff4757;
             border-color: #ff4757;
         }
 
-        .track-action-btn.liked:hover {
+        .like-btn.liked:hover {
             background: rgba(255, 71, 87, 0.2);
         }
 
@@ -3040,8 +3041,12 @@
             color: #fff;
         }
 
-        .sidebar-track-actions button.liked {
+        .sidebar-track-actions .like-btn.liked {
             color: #ff4757;
+        }
+
+        .sidebar-track-actions .like-btn.liked .lucide-icon {
+            fill: #ff4757;
         }
 
         /* Empty state */
@@ -5255,11 +5260,11 @@
                             </div>
                         </div>
                         <div class="pack-track-actions">
-                            <button class="track-action-btn ${likedTracks.has(track.id) ? 'liked' : ''}"
+                            <button class="track-action-btn like-btn ${likedTracks.has(track.id) ? 'liked' : ''}"
                                     onclick="event.stopPropagation(); toggleTrackLike(${track.id})" title="Like">
                                 <i data-lucide="heart" class="lucide-icon"></i>
                             </button>
-                            <button class="track-action-btn" onclick="event.stopPropagation(); downloadTrack(${track.id})" title="Download">
+                            <button class="track-action-btn download-btn" onclick="event.stopPropagation(); downloadTrack(${track.id})" title="Download">
                                 <i data-lucide="download" class="lucide-icon"></i>
                             </button>
                         </div>
@@ -5312,8 +5317,8 @@
 
                 showToast(data.message, 'success');
 
-                // Update UI
-                document.querySelectorAll(`.pack-track-item[data-track-id="${trackId}"] .track-action-btn`).forEach(btn => {
+                // Update UI - only target like buttons
+                document.querySelectorAll(`.pack-track-item[data-track-id="${trackId}"] .like-btn`).forEach(btn => {
                     btn.classList.toggle('liked', data.liked);
                 });
 
@@ -6327,7 +6332,7 @@
                     </div>
                     <div class="sidebar-track-actions">
                         ${showLike ? `
-                            <button class="${isLiked ? 'liked' : ''}" onclick="toggleTrackLike(${beat.id})" title="Like">
+                            <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="toggleTrackLike(${beat.id})" title="Like">
                                 <i data-lucide="heart" class="lucide-icon"></i>
                             </button>
                         ` : ''}
