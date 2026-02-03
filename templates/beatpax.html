@@ -1535,6 +1535,58 @@
             padding: 12px;
             background: #1a1a1a;
             border-radius: 8px;
+            cursor: pointer;
+            transition: margin-top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        background 0.2s,
+                        box-shadow 0.3s ease;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Stacked card effect for creators - collapsed state */
+        .creator-item:nth-child(1) {
+            z-index: 5;
+            margin-top: 0;
+        }
+
+        .creator-item:nth-child(2) {
+            z-index: 4;
+            margin-top: -44px;
+            transform: scaleX(0.95);
+        }
+
+        .creator-item:nth-child(3) {
+            z-index: 3;
+            margin-top: -44px;
+            transform: scaleX(0.90);
+        }
+
+        .creator-item:nth-child(4) {
+            z-index: 2;
+            margin-top: -44px;
+            transform: scaleX(0.85);
+        }
+
+        .creator-item:nth-child(5) {
+            z-index: 1;
+            margin-top: -44px;
+            transform: scaleX(0.80);
+        }
+
+        /* Expanded state on hover for creators */
+        .lower-section:hover .creator-item {
+            margin-top: 8px;
+            transform: scaleX(1);
+        }
+
+        .lower-section:hover .creator-item:nth-child(1) {
+            margin-top: 0;
+        }
+
+        .creator-item:hover {
+            background: #2d2d2d;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
         }
 
         .creator-avatar {
