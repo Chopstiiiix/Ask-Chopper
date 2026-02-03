@@ -8,6 +8,10 @@
     <meta property="og:title" content="{{ pack.name }} - Curated Pack | Beatpax">
     <meta property="og:description" content="{{ pack.track_count }} tracks curated by {{ pack.creator_name }}{% if pack.recipient_name %} for {{ pack.recipient_name }}{% endif %}">
     <meta property="og:type" content="music.playlist">
+    {% if pack.cover_url %}
+    <meta property="og:image" content="{{ pack.cover_url }}">
+    <meta name="twitter:image" content="{{ pack.cover_url }}">
+    {% endif %}
     <meta name="twitter:card" content="summary">
     {% else %}
     <title>Curated Pack Not Found - Beatpax</title>
@@ -155,6 +159,35 @@
         .curated-badge .lucide-icon {
             width: 14px;
             height: 14px;
+        }
+
+        .pack-cover {
+            width: 200px;
+            height: 200px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin: 0 auto 20px;
+            display: block;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            background: #1a1a1a;
+        }
+
+        .pack-cover-placeholder {
+            width: 200px;
+            height: 200px;
+            border-radius: 12px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .pack-cover-placeholder .lucide-icon {
+            width: 64px;
+            height: 64px;
+            color: #444;
         }
 
         .pack-title {
@@ -621,6 +654,13 @@
                 <i data-lucide="sparkles" class="lucide-icon"></i>
                 Curated Pack
             </div>
+            {% if pack.cover_url %}
+            <img src="{{ pack.cover_url }}" alt="{{ pack.name }}" class="pack-cover">
+            {% else %}
+            <div class="pack-cover-placeholder">
+                <i data-lucide="music" class="lucide-icon"></i>
+            </div>
+            {% endif %}
             <h1 class="pack-title">{{ pack.name }}</h1>
             {% if pack.recipient_name %}
             <p class="pack-recipient">{{ pack.recipient_name }}</p>

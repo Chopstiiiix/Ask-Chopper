@@ -529,6 +529,7 @@ class CuratedPack(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
+    cover_url = db.Column(db.String(500))  # Album art
     recipient_name = db.Column(db.String(100))  # "For Sarah"
     share_code = db.Column(db.String(8), unique=True, nullable=False)
     is_free = db.Column(db.Boolean, default=False)  # If true, no tokens required
@@ -549,6 +550,7 @@ class CuratedPack(db.Model):
             'creator_name': f"{self.user.first_name} {self.user.surname}" if self.user else None,
             'name': self.name,
             'description': self.description,
+            'cover_url': self.cover_url,
             'recipient_name': self.recipient_name,
             'share_code': self.share_code,
             'share_url': f"/beatpax/curated/{self.share_code}",

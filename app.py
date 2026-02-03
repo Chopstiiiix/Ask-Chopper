@@ -2606,6 +2606,7 @@ def create_curated_pack():
             user_id=user_id,
             name=name,
             description=data.get('description', '').strip() or None,
+            cover_url=data.get('cover_url') or None,
             recipient_name=data.get('recipient_name', '').strip() or None,
             share_code=generate_share_code(),
             is_free=data.get('is_free', False)
