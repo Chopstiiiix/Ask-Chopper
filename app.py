@@ -1419,7 +1419,7 @@ def chat_history():
 # =============================================================================
 
 ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'flac', 'm4a'}
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
 MAX_AUDIO_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_IMAGE_SIZE = 5 * 1024 * 1024   # 5MB
 
@@ -1827,14 +1827,28 @@ def get_soundpacks():
 @app.route('/api/beatpax/upload-audio', methods=['POST'])
 @login_required
 def beatpax_upload_audio():
-    """Upload just an audio file and return the URL (for local development)"""
+    """Upload just an audio file and return the URL"""
     try:
+        print(f"[UPLOAD-AUDIO] Starting audio upload, blob configured: {blob_storage.is_blob_configured()}")
+
         audio_file = request.files.get('audio')
         if not audio_file or not audio_file.filename:
+            print("[UPLOAD-AUDIO] No audio file in request")
             return jsonify({'error': 'Audio file is required'}), 400
 
+        print(f"[UPLOAD-AUDIO] File: {audio_file.filename}, Content-Type: {audio_file.content_type}")
+
         if not allowed_audio_file(audio_file.filename):
-            return jsonify({'error': 'Invalid audio format'}), 400
+            return jsonify({'error': 'Invalid audio format. Allowed: MP3, WAV, FLAC, M4A'}), 400
+
+        # Check file size
+        audio_file.seek(0, 2)
+        audio_size = audio_file.tell()
+        audio_file.seek(0)
+        print(f"[UPLOAD-AUDIO] File size: {audio_size} bytes")
+
+        if audio_size > MAX_AUDIO_SIZE:
+            return jsonify({'error': f'Audio file too large. Maximum {MAX_AUDIO_SIZE // (1024*1024)}MB'}), 400
 
         # Generate unique filename
         audio_filename = generate_unique_filename(audio_file.filename)
@@ -1843,22 +1857,84 @@ def beatpax_upload_audio():
         # Upload to Blob storage or local
         if blob_storage.is_blob_configured():
             audio_path = blob_storage.generate_blob_path('packs/audio', audio_filename)
+            print(f"[UPLOAD-AUDIO] Uploading to blob: {audio_path}")
             audio_url, _ = blob_storage.upload_file(audio_file, audio_path, audio_mime)
+            print(f"[UPLOAD-AUDIO] Upload successful: {audio_url}")
         else:
             audio_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'packs', 'audio')
             os.makedirs(audio_dir, exist_ok=True)
             audio_local_path = os.path.join(audio_dir, audio_filename)
             audio_file.save(audio_local_path)
             audio_url = f'/uploads/packs/audio/{audio_filename}'
+            print(f"[UPLOAD-AUDIO] Saved locally: {audio_url}")
 
         return jsonify({
             'success': True,
-            'audio_url': audio_url
+            'url': audio_url,
+            'audio_url': audio_url  # Keep for backwards compatibility
         })
 
     except Exception as e:
-        print(f"Error uploading audio: {e}")
-        return jsonify({'error': 'Failed to upload audio'}), 500
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"[UPLOAD-AUDIO] Error: {e}\n{error_details}")
+        return jsonify({'error': f'Failed to upload audio: {str(e)[:100]}'}), 500
+
+
+@app.route('/api/beatpax/upload-image', methods=['POST'])
+@login_required
+def beatpax_upload_image():
+    """Upload just an image file (for covers) and return the URL"""
+    try:
+        print(f"[UPLOAD-IMAGE] Starting image upload, blob configured: {blob_storage.is_blob_configured()}")
+
+        image_file = request.files.get('image') or request.files.get('cover')
+        if not image_file or not image_file.filename:
+            print("[UPLOAD-IMAGE] No image file in request")
+            return jsonify({'error': 'Image file is required'}), 400
+
+        print(f"[UPLOAD-IMAGE] File: {image_file.filename}, Content-Type: {image_file.content_type}")
+
+        if not allowed_image_file(image_file.filename):
+            return jsonify({'error': 'Invalid image format. Allowed: JPG, PNG, GIF, WebP'}), 400
+
+        # Check file size (max 10MB for images)
+        image_file.seek(0, 2)
+        image_size = image_file.tell()
+        image_file.seek(0)
+        print(f"[UPLOAD-IMAGE] File size: {image_size} bytes")
+
+        if image_size > 10 * 1024 * 1024:
+            return jsonify({'error': 'Image too large. Maximum 10MB'}), 400
+
+        # Generate unique filename
+        image_filename = generate_unique_filename(image_file.filename)
+        image_mime = image_file.content_type or mimetypes.guess_type(image_file.filename)[0] or 'image/jpeg'
+
+        # Upload to Blob storage or local
+        if blob_storage.is_blob_configured():
+            image_path = blob_storage.generate_blob_path('covers', image_filename)
+            print(f"[UPLOAD-IMAGE] Uploading to blob: {image_path}")
+            image_url, _ = blob_storage.upload_file(image_file, image_path, image_mime)
+            print(f"[UPLOAD-IMAGE] Upload successful: {image_url}")
+        else:
+            image_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'covers')
+            os.makedirs(image_dir, exist_ok=True)
+            image_local_path = os.path.join(image_dir, image_filename)
+            image_file.save(image_local_path)
+            image_url = f'/uploads/covers/{image_filename}'
+            print(f"[UPLOAD-IMAGE] Saved locally: {image_url}")
+
+        return jsonify({
+            'success': True,
+            'url': image_url
+        })
+
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"[UPLOAD-IMAGE] Error: {e}\n{error_details}")
+        return jsonify({'error': f'Failed to upload image: {str(e)[:100]}'}), 500
 
 
 @app.route('/api/beatpax/upload', methods=['POST'])

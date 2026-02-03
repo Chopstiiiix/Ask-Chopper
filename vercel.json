@@ -15,6 +15,12 @@
       "dest": "app.py"
     }
   ],
+  "functions": {
+    "app.py": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "env": {
     "VERCEL": "true"
   }

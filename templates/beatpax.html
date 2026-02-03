@@ -6729,15 +6729,18 @@
                     createBtn.textContent = 'Uploading cover...';
 
                     const coverFormData = new FormData();
-                    coverFormData.append('cover', curateCoverFile);
+                    coverFormData.append('image', curateCoverFile);
 
-                    const coverResp = await fetch('/api/beatpax/upload', {
+                    const coverResp = await fetch('/api/beatpax/upload-image', {
                         method: 'POST',
                         body: coverFormData
                     });
 
                     const coverData = await coverResp.json();
-                    if (coverData.url) {
+                    if (coverData.error) {
+                        console.error('Cover upload error:', coverData.error);
+                        showToast('Failed to upload cover: ' + coverData.error, 'error');
+                    } else if (coverData.url) {
                         coverUrl = coverData.url;
                     }
                 }
