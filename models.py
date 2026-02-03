@@ -493,3 +493,98 @@ class UserBeatLibrary(db.Model):
             'downloaded_at': self.downloaded_at.isoformat() if self.downloaded_at else None,
             'download_count': self.download_count
         }
+
+
+class UserLikedTrack(db.Model):
+    """User's liked tracks for Beatpax"""
+    __tablename__ = 'user_liked_tracks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    beat_id = db.Column(db.Integer, db.ForeignKey('beats.id'), nullable=False)
+    liked_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='liked_tracks')
+    beat = db.relationship('Beat', backref='likes')
+
+    # Unique constraint to prevent duplicate likes
+    __table_args__ = (db.UniqueConstraint('user_id', 'beat_id', name='unique_user_liked_beat'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'beat_id': self.beat_id,
+            'beat': self.beat.to_dict() if self.beat else None,
+            'liked_at': self.liked_at.isoformat() if self.liked_at else None
+        }
+
+
+class CuratedPack(db.Model):
+    """User-curated sound pack for sharing"""
+    __tablename__ = 'curated_packs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    recipient_name = db.Column(db.String(100))  # "For Sarah"
+    share_code = db.Column(db.String(8), unique=True, nullable=False)
+    is_free = db.Column(db.Boolean, default=False)  # If true, no tokens required
+    view_count = db.Column(db.Integer, default=0)
+    download_count = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref='curated_packs')
+    tracks = db.relationship('CuratedPackTrack', backref='curated_pack', lazy=True, cascade='all, delete-orphan')
+
+    def to_dict(self, include_tracks=False):
+        data = {
+            'id': self.id,
+            'user_id': self.user_id,
+            'creator_name': f"{self.user.first_name} {self.user.surname}" if self.user else None,
+            'name': self.name,
+            'description': self.description,
+            'recipient_name': self.recipient_name,
+            'share_code': self.share_code,
+            'share_url': f"/beatpax/curated/{self.share_code}",
+            'is_free': self.is_free,
+            'view_count': self.view_count,
+            'download_count': self.download_count,
+            'track_count': len(self.tracks),
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+        if include_tracks:
+            data['tracks'] = [t.to_dict() for t in sorted(self.tracks, key=lambda x: x.track_order)]
+        return data
+
+
+class CuratedPackTrack(db.Model):
+    """Track in a curated pack"""
+    __tablename__ = 'curated_pack_tracks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    curated_pack_id = db.Column(db.Integer, db.ForeignKey('curated_packs.id'), nullable=False)
+    beat_id = db.Column(db.Integer, db.ForeignKey('beats.id'), nullable=False)
+    track_order = db.Column(db.Integer, default=0)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    beat = db.relationship('Beat')
+
+    # Unique constraint to prevent duplicate tracks in same pack
+    __table_args__ = (db.UniqueConstraint('curated_pack_id', 'beat_id', name='unique_curated_pack_beat'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'curated_pack_id': self.curated_pack_id,
+            'beat_id': self.beat_id,
+            'beat': self.beat.to_dict() if self.beat else None,
+            'track_order': self.track_order,
+            'added_at': self.added_at.isoformat() if self.added_at else None
+        }

@@ -2778,6 +2778,740 @@
                 justify-content: center;
             }
         }
+
+        /* ============================================
+           BEATPAX SIDEBAR
+           ============================================ */
+        .beatpax-sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            width: 240px;
+            height: calc(100vh - 60px);
+            background: #0a0a0a;
+            border-right: 1px solid #2d2d2d;
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .beatpax-sidebar.collapsed {
+            transform: translateX(-240px);
+        }
+
+        .sidebar-nav {
+            padding: 16px 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: #888;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav-item:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .sidebar-nav-item.active {
+            background: #1a1a1a;
+            color: #fff;
+            border-left-color: #fff;
+        }
+
+        .sidebar-nav-item .lucide-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-nav-item .nav-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav-item .nav-count {
+            margin-left: auto;
+            background: #2d2d2d;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: #2d2d2d;
+            margin: 8px 20px;
+        }
+
+        .sidebar-section-title {
+            padding: 12px 20px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Sidebar toggle button for mobile */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            left: 16px;
+            bottom: 100px;
+            width: 44px;
+            height: 44px;
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 95;
+            color: #fff;
+        }
+
+        .sidebar-toggle .lucide-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Main content shift when sidebar is visible */
+        .main-content.with-sidebar {
+            margin-left: 240px;
+        }
+
+        /* Sidebar View Panels */
+        .sidebar-view-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+        }
+
+        .sidebar-view-overlay.active {
+            display: block;
+        }
+
+        .sidebar-view-panel {
+            position: fixed;
+            top: 60px;
+            left: 240px;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            z-index: 150;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .sidebar-view-panel.active {
+            display: block;
+        }
+
+        .view-panel-header {
+            position: sticky;
+            top: 0;
+            background: #0a0a0a;
+            border-bottom: 1px solid #2d2d2d;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .view-panel-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .view-panel-close {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .view-panel-close:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .view-panel-content {
+            padding: 24px;
+        }
+
+        /* Track list in sidebar views */
+        .sidebar-track-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sidebar-track-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #0d0d0d;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sidebar-track-item:hover {
+            background: #1a1a1a;
+        }
+
+        .sidebar-track-cover {
+            width: 48px;
+            height: 48px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #1a1a1a;
+        }
+
+        .sidebar-track-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar-track-title {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-track-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .sidebar-track-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sidebar-track-actions button {
+            background: none;
+            border: none;
+            color: #888;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-track-actions button:hover {
+            background: #2d2d2d;
+            color: #fff;
+        }
+
+        .sidebar-track-actions button.liked {
+            color: #ff4757;
+        }
+
+        /* Empty state */
+        .sidebar-empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .sidebar-empty-state .lucide-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .sidebar-empty-state h3 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #888;
+        }
+
+        .sidebar-empty-state p {
+            font-size: 14px;
+        }
+
+        /* Curate section */
+        .curated-pack-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .curated-pack-card {
+            background: #0d0d0d;
+            border: 1px solid #2d2d2d;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .curated-pack-card:hover {
+            border-color: #4a4a4a;
+            transform: translateY(-2px);
+        }
+
+        .curated-pack-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .curated-pack-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .curated-pack-badge {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .curated-pack-badge.free {
+            background: #166534;
+            color: #4ade80;
+        }
+
+        .curated-pack-badge.paid {
+            background: #1a1a1a;
+            color: #ffd700;
+        }
+
+        .curated-pack-recipient {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .curated-pack-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .curated-pack-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .curated-pack-stat .lucide-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .curated-pack-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #2d2d2d;
+        }
+
+        .curated-pack-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .curated-pack-actions .lucide-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .curated-pack-actions .btn-copy {
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            color: #fff;
+        }
+
+        .curated-pack-actions .btn-copy:hover {
+            background: #2d2d2d;
+        }
+
+        .curated-pack-actions .btn-delete {
+            background: none;
+            border: 1px solid #2d2d2d;
+            color: #888;
+        }
+
+        .curated-pack-actions .btn-delete:hover {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        /* Create curated pack button */
+        .create-curated-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px;
+            background: #1a1a1a;
+            border: 2px dashed #2d2d2d;
+            border-radius: 12px;
+            color: #888;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .create-curated-btn:hover {
+            background: #2d2d2d;
+            border-color: #4a4a4a;
+            color: #fff;
+        }
+
+        .create-curated-btn .lucide-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Create Curated Pack Modal */
+        .curate-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 300;
+            display: none;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .curate-modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .curate-modal-content {
+            width: 100%;
+            max-width: 600px;
+            background: #0d0d0d;
+            border: 1px solid #2d2d2d;
+            border-radius: 16px;
+            margin-top: 40px;
+        }
+
+        .curate-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .curate-modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .curate-modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .curate-modal-close:hover {
+            color: #fff;
+        }
+
+        .curate-modal-body {
+            padding: 24px;
+        }
+
+        .curate-form-group {
+            margin-bottom: 20px;
+        }
+
+        .curate-form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .curate-form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .curate-form-input:focus {
+            border-color: #4a4a4a;
+        }
+
+        .curate-form-input::placeholder {
+            color: #666;
+        }
+
+        .curate-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .curate-toggle-info h4 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .curate-toggle-info p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .curate-toggle {
+            position: relative;
+            width: 48px;
+            height: 26px;
+        }
+
+        .curate-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .curate-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #2d2d2d;
+            border-radius: 13px;
+            transition: 0.2s;
+        }
+
+        .curate-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .curate-toggle input:checked + .curate-toggle-slider {
+            background: #4ade80;
+        }
+
+        .curate-toggle input:checked + .curate-toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .curate-track-selector {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+        }
+
+        .curate-track-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .curate-track-option:last-child {
+            border-bottom: none;
+        }
+
+        .curate-track-option:hover {
+            background: #1a1a1a;
+        }
+
+        .curate-track-option.selected {
+            background: #1a3a1a;
+        }
+
+        .curate-track-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4a4a4a;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .curate-track-option.selected .curate-track-checkbox {
+            background: #4ade80;
+            border-color: #4ade80;
+        }
+
+        .curate-track-checkbox .lucide-icon {
+            width: 14px;
+            height: 14px;
+            color: #000;
+            display: none;
+        }
+
+        .curate-track-option.selected .curate-track-checkbox .lucide-icon {
+            display: block;
+        }
+
+        .curate-track-cover {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            object-fit: cover;
+            background: #2d2d2d;
+        }
+
+        .curate-track-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .curate-track-title {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .curate-track-artist {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .curate-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 20px 24px;
+            border-top: 1px solid #2d2d2d;
+        }
+
+        .curate-modal-footer button {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .curate-modal-footer .btn-cancel {
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            color: #fff;
+        }
+
+        .curate-modal-footer .btn-cancel:hover {
+            background: #2d2d2d;
+        }
+
+        .curate-modal-footer .btn-create {
+            background: #fff;
+            border: none;
+            color: #000;
+        }
+
+        .curate-modal-footer .btn-create:hover {
+            background: #e0e0e0;
+        }
+
+        .curate-modal-footer .btn-create:disabled {
+            background: #4a4a4a;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        /* Responsive sidebar */
+        @media (max-width: 1024px) {
+            .beatpax-sidebar {
+                transform: translateX(-240px);
+            }
+
+            .beatpax-sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content.with-sidebar {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: flex;
+            }
+
+            .sidebar-view-panel {
+                left: 0;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 85;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2831,8 +3565,150 @@
         </div>
     </div>
 
+    <!-- Beatpax Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="beatpax-sidebar" id="beatpaxSidebar">
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-item active" data-view="explore" onclick="switchSidebarView('explore')">
+                <i data-lucide="compass" class="lucide-icon"></i>
+                <span class="nav-label">Explore</span>
+            </div>
+            <div class="sidebar-nav-item" data-view="liked" onclick="switchSidebarView('liked')">
+                <i data-lucide="heart" class="lucide-icon"></i>
+                <span class="nav-label">Liked Tracks</span>
+                <span class="nav-count" id="likedCount">0</span>
+            </div>
+            <div class="sidebar-nav-item" data-view="downloaded" onclick="switchSidebarView('downloaded')">
+                <i data-lucide="download" class="lucide-icon"></i>
+                <span class="nav-label">Downloaded</span>
+                <span class="nav-count" id="downloadedCount">0</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Create</div>
+            <div class="sidebar-nav-item" data-view="curate" onclick="switchSidebarView('curate')">
+                <i data-lucide="folder-plus" class="lucide-icon"></i>
+                <span class="nav-label">Curate</span>
+                <span class="nav-count" id="curatedCount">0</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Sidebar Toggle Button (Mobile) -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i data-lucide="layout-grid" class="lucide-icon"></i>
+    </button>
+
+    <!-- Liked Tracks View Panel -->
+    <div class="sidebar-view-panel" id="likedPanel">
+        <div class="view-panel-header">
+            <h2 class="view-panel-title">Liked Tracks</h2>
+            <button class="view-panel-close" onclick="closeSidebarView()">
+                <i data-lucide="x" class="lucide-icon"></i>
+            </button>
+        </div>
+        <div class="view-panel-content">
+            <div class="sidebar-track-list" id="likedTrackList">
+                <div class="sidebar-empty-state">
+                    <i data-lucide="heart" class="lucide-icon"></i>
+                    <h3>No liked tracks yet</h3>
+                    <p>Click the heart icon on any track to save it here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Downloaded Tracks View Panel -->
+    <div class="sidebar-view-panel" id="downloadedPanel">
+        <div class="view-panel-header">
+            <h2 class="view-panel-title">Downloaded Tracks</h2>
+            <button class="view-panel-close" onclick="closeSidebarView()">
+                <i data-lucide="x" class="lucide-icon"></i>
+            </button>
+        </div>
+        <div class="view-panel-content">
+            <div class="sidebar-track-list" id="downloadedTrackList">
+                <div class="sidebar-empty-state">
+                    <i data-lucide="download" class="lucide-icon"></i>
+                    <h3>No downloads yet</h3>
+                    <p>Tracks you purchase will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curate View Panel -->
+    <div class="sidebar-view-panel" id="curatePanel">
+        <div class="view-panel-header">
+            <h2 class="view-panel-title">Curated Packs</h2>
+            <button class="view-panel-close" onclick="closeSidebarView()">
+                <i data-lucide="x" class="lucide-icon"></i>
+            </button>
+        </div>
+        <div class="view-panel-content">
+            <button class="create-curated-btn" onclick="openCurateModal()">
+                <i data-lucide="plus" class="lucide-icon"></i>
+                Create New Pack
+            </button>
+            <div class="curated-pack-list" id="curatedPackList">
+                <div class="sidebar-empty-state">
+                    <i data-lucide="folder-plus" class="lucide-icon"></i>
+                    <h3>No curated packs yet</h3>
+                    <p>Create a custom pack to share with others</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Curated Pack Modal -->
+    <div class="curate-modal" id="curateModal">
+        <div class="curate-modal-content">
+            <div class="curate-modal-header">
+                <h3 class="curate-modal-title">Create Curated Pack</h3>
+                <button class="curate-modal-close" onclick="closeCurateModal()">
+                    <i data-lucide="x" class="lucide-icon"></i>
+                </button>
+            </div>
+            <div class="curate-modal-body">
+                <div class="curate-form-group">
+                    <label class="curate-form-label">Pack Name *</label>
+                    <input type="text" class="curate-form-input" id="curatePackName" placeholder="e.g., Summer Vibes Collection">
+                </div>
+                <div class="curate-form-group">
+                    <label class="curate-form-label">Recipient Name (optional)</label>
+                    <input type="text" class="curate-form-input" id="curateRecipient" placeholder="e.g., For Sarah">
+                </div>
+                <div class="curate-form-group">
+                    <label class="curate-form-label">Description (optional)</label>
+                    <input type="text" class="curate-form-input" id="curateDescription" placeholder="A short description of your pack">
+                </div>
+                <div class="curate-toggle-row">
+                    <div class="curate-toggle-info">
+                        <h4>Free Download</h4>
+                        <p>Recipients can download without tokens</p>
+                    </div>
+                    <label class="curate-toggle">
+                        <input type="checkbox" id="curateFreeToggle">
+                        <span class="curate-toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="curate-form-group">
+                    <label class="curate-form-label">Select Tracks *</label>
+                    <div class="curate-track-selector" id="curateTrackSelector">
+                        <div style="padding: 20px; text-align: center; color: #666;">
+                            Loading your tracks...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="curate-modal-footer">
+                <button class="btn-cancel" onclick="closeCurateModal()">Cancel</button>
+                <button class="btn-create" id="createCuratedPackBtn" onclick="createCuratedPack()" disabled>Create Pack</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content with-sidebar" id="mainContent">
         <!-- Hero Banner -->
         <div class="hero-banner">
             <h1 class="hero-title">Discover & Download Beats</h1>
@@ -4076,24 +4952,43 @@
             }
         }
 
-        // Toggle track like
-        function toggleTrackLike(trackId) {
-            if (likedTracks.has(trackId)) {
-                likedTracks.delete(trackId);
-                showToast('Removed from liked', 'success');
-            } else {
-                likedTracks.add(trackId);
-                showToast('Added to liked!', 'success');
-            }
+        // Toggle track like (persistent via API)
+        async function toggleTrackLike(trackId) {
+            try {
+                const response = await fetch(`/api/beatpax/beats/${trackId}/like`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
 
-            // Update UI
-            const trackBtn = document.querySelector(`.pack-track-item[data-track-id="${trackId}"] .track-action-btn`);
-            if (trackBtn) trackBtn.classList.toggle('liked', likedTracks.has(trackId));
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    return;
+                }
 
-            // Update player bar like button if this is the current track
-            const pack = packsData[currentPackId];
-            if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]?.id === trackId) {
-                document.getElementById('playerLikeBtn').classList.toggle('liked', likedTracks.has(trackId));
+                if (data.liked) {
+                    likedTracks.add(trackId);
+                } else {
+                    likedTracks.delete(trackId);
+                }
+
+                showToast(data.message, 'success');
+
+                // Update UI
+                document.querySelectorAll(`.pack-track-item[data-track-id="${trackId}"] .track-action-btn`).forEach(btn => {
+                    btn.classList.toggle('liked', data.liked);
+                });
+
+                // Update player bar like button if this is the current track
+                const pack = packsData[currentPackId];
+                if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]?.id === trackId) {
+                    document.getElementById('playerLikeBtn').classList.toggle('liked', data.liked);
+                }
+
+                // Update sidebar count
+                updateSidebarCounts();
+            } catch (e) {
+                console.error('Error toggling like:', e);
+                showToast('Failed to update like', 'error');
             }
         }
 
@@ -4935,8 +5830,452 @@
             document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
         }
 
+        // ============================================
+        // SIDEBAR FUNCTIONALITY
+        // ============================================
+
+        let currentSidebarView = 'explore';
+        let curatedPacks = [];
+        let selectedCurateTracks = new Set();
+
+        // Load liked track IDs on page load
+        async function loadLikedTrackIds() {
+            try {
+                const response = await fetch('/api/beatpax/liked/ids');
+                const data = await response.json();
+                if (data.liked_ids) {
+                    likedTracks = new Set(data.liked_ids);
+                    document.getElementById('likedCount').textContent = data.liked_ids.length;
+                }
+            } catch (e) {
+                console.error('Error loading liked IDs:', e);
+            }
+        }
+
+        // Update sidebar counts
+        async function updateSidebarCounts() {
+            try {
+                // Liked count
+                const likedResp = await fetch('/api/beatpax/liked/ids');
+                const likedData = await likedResp.json();
+                document.getElementById('likedCount').textContent = likedData.liked_ids?.length || 0;
+
+                // Downloaded count
+                const dlResp = await fetch('/api/beatpax/library');
+                const dlData = await dlResp.json();
+                document.getElementById('downloadedCount').textContent = dlData.count || 0;
+
+                // Curated count
+                const curatedResp = await fetch('/api/beatpax/curated');
+                const curatedData = await curatedResp.json();
+                document.getElementById('curatedCount').textContent = curatedData.count || 0;
+            } catch (e) {
+                console.error('Error updating counts:', e);
+            }
+        }
+
+        // Switch sidebar view
+        function switchSidebarView(view) {
+            currentSidebarView = view;
+
+            // Update nav items
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.view === view);
+            });
+
+            // Close all panels first
+            document.querySelectorAll('.sidebar-view-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            if (view === 'explore') {
+                // Just show main content
+                return;
+            }
+
+            // Open the appropriate panel
+            const panelId = view + 'Panel';
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                panel.classList.add('active');
+                loadViewContent(view);
+            }
+        }
+
+        // Close sidebar view
+        function closeSidebarView() {
+            document.querySelectorAll('.sidebar-view-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            switchSidebarView('explore');
+        }
+
+        // Load content for a view
+        async function loadViewContent(view) {
+            if (view === 'liked') {
+                await loadLikedTracks();
+            } else if (view === 'downloaded') {
+                await loadDownloadedTracks();
+            } else if (view === 'curate') {
+                await loadCuratedPacks();
+            }
+        }
+
+        // Load liked tracks
+        async function loadLikedTracks() {
+            const container = document.getElementById('likedTrackList');
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Loading...</div>';
+
+            try {
+                const response = await fetch('/api/beatpax/liked');
+                const data = await response.json();
+
+                if (data.tracks && data.tracks.length > 0) {
+                    container.innerHTML = data.tracks.map(item => createSidebarTrackItem(item.beat, true)).join('');
+                    lucide.createIcons();
+                } else {
+                    container.innerHTML = `
+                        <div class="sidebar-empty-state">
+                            <i data-lucide="heart" class="lucide-icon"></i>
+                            <h3>No liked tracks yet</h3>
+                            <p>Click the heart icon on any track to save it here</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ff4444;">Failed to load</div>';
+            }
+        }
+
+        // Load downloaded tracks
+        async function loadDownloadedTracks() {
+            const container = document.getElementById('downloadedTrackList');
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Loading...</div>';
+
+            try {
+                const response = await fetch('/api/beatpax/library');
+                const data = await response.json();
+
+                if (data.library && data.library.length > 0) {
+                    container.innerHTML = data.library.map(item => createSidebarTrackItem(item.beat, false, true)).join('');
+                    lucide.createIcons();
+                } else {
+                    container.innerHTML = `
+                        <div class="sidebar-empty-state">
+                            <i data-lucide="download" class="lucide-icon"></i>
+                            <h3>No downloads yet</h3>
+                            <p>Tracks you purchase will appear here</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ff4444;">Failed to load</div>';
+            }
+        }
+
+        // Create sidebar track item HTML
+        function createSidebarTrackItem(beat, showLike = true, showDownloadLink = false) {
+            if (!beat) return '';
+            const isLiked = likedTracks.has(beat.id);
+            return `
+                <div class="sidebar-track-item" data-track-id="${beat.id}">
+                    <img src="${beat.cover_url || '/static/images/default-cover.png'}" alt="" class="sidebar-track-cover">
+                    <div class="sidebar-track-info">
+                        <div class="sidebar-track-title">${beat.title}</div>
+                        <div class="sidebar-track-meta">${beat.creator_name || 'Unknown'} ${beat.bpm ? '• ' + beat.bpm + ' BPM' : ''}</div>
+                    </div>
+                    <div class="sidebar-track-actions">
+                        ${showLike ? `
+                            <button class="${isLiked ? 'liked' : ''}" onclick="toggleTrackLike(${beat.id})" title="Like">
+                                <i data-lucide="heart" class="lucide-icon"></i>
+                            </button>
+                        ` : ''}
+                        ${showDownloadLink ? `
+                            <a href="${beat.audio_url}" download title="Download" style="color: #888; padding: 8px;">
+                                <i data-lucide="download" class="lucide-icon"></i>
+                            </a>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load curated packs
+        async function loadCuratedPacks() {
+            const container = document.getElementById('curatedPackList');
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Loading...</div>';
+
+            try {
+                const response = await fetch('/api/beatpax/curated');
+                const data = await response.json();
+                curatedPacks = data.packs || [];
+
+                if (curatedPacks.length > 0) {
+                    container.innerHTML = curatedPacks.map(createCuratedPackCard).join('');
+                    lucide.createIcons();
+                } else {
+                    container.innerHTML = `
+                        <div class="sidebar-empty-state">
+                            <i data-lucide="folder-plus" class="lucide-icon"></i>
+                            <h3>No curated packs yet</h3>
+                            <p>Create a custom pack to share with others</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ff4444;">Failed to load</div>';
+            }
+        }
+
+        // Create curated pack card HTML
+        function createCuratedPackCard(pack) {
+            return `
+                <div class="curated-pack-card" data-pack-id="${pack.id}">
+                    <div class="curated-pack-header">
+                        <div class="curated-pack-name">${pack.name}</div>
+                        <span class="curated-pack-badge ${pack.is_free ? 'free' : 'paid'}">
+                            ${pack.is_free ? 'Free' : 'Tokens Required'}
+                        </span>
+                    </div>
+                    ${pack.recipient_name ? `<div class="curated-pack-recipient">${pack.recipient_name}</div>` : ''}
+                    <div class="curated-pack-stats">
+                        <span class="curated-pack-stat">
+                            <i data-lucide="music" class="lucide-icon"></i>
+                            ${pack.track_count} tracks
+                        </span>
+                        <span class="curated-pack-stat">
+                            <i data-lucide="eye" class="lucide-icon"></i>
+                            ${pack.view_count} views
+                        </span>
+                        <span class="curated-pack-stat">
+                            <i data-lucide="download" class="lucide-icon"></i>
+                            ${pack.download_count} downloads
+                        </span>
+                    </div>
+                    <div class="curated-pack-actions">
+                        <button class="btn-copy" onclick="event.stopPropagation(); copyCuratedLink('${pack.share_code}')">
+                            <i data-lucide="link" class="lucide-icon"></i>
+                            Copy Link
+                        </button>
+                        <button class="btn-delete" onclick="event.stopPropagation(); deleteCuratedPack(${pack.id})">
+                            <i data-lucide="trash-2" class="lucide-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Copy curated pack link
+        function copyCuratedLink(shareCode) {
+            const url = `${window.location.origin}/beatpax/curated/${shareCode}`;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Share link copied!', 'success');
+            }).catch(() => {
+                const input = document.createElement('input');
+                input.value = url;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('Share link copied!', 'success');
+            });
+        }
+
+        // Delete curated pack
+        async function deleteCuratedPack(packId) {
+            if (!confirm('Are you sure you want to delete this curated pack?')) return;
+
+            try {
+                const response = await fetch(`/api/beatpax/curated/${packId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Pack deleted', 'success');
+                    loadCuratedPacks();
+                    updateSidebarCounts();
+                } else {
+                    showToast(data.error || 'Failed to delete', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to delete pack', 'error');
+            }
+        }
+
+        // Open curate modal
+        async function openCurateModal() {
+            document.getElementById('curateModal').classList.add('active');
+            selectedCurateTracks.clear();
+            document.getElementById('curatePackName').value = '';
+            document.getElementById('curateRecipient').value = '';
+            document.getElementById('curateDescription').value = '';
+            document.getElementById('curateFreeToggle').checked = false;
+            document.getElementById('createCuratedPackBtn').disabled = true;
+
+            // Load available tracks (liked + downloaded)
+            await loadCurateTrackOptions();
+            lucide.createIcons();
+        }
+
+        // Close curate modal
+        function closeCurateModal() {
+            document.getElementById('curateModal').classList.remove('active');
+        }
+
+        // Load track options for curate modal
+        async function loadCurateTrackOptions() {
+            const container = document.getElementById('curateTrackSelector');
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Loading...</div>';
+
+            try {
+                // Get both liked and downloaded tracks
+                const [likedResp, dlResp] = await Promise.all([
+                    fetch('/api/beatpax/liked'),
+                    fetch('/api/beatpax/library')
+                ]);
+
+                const likedData = await likedResp.json();
+                const dlData = await dlResp.json();
+
+                // Combine and dedupe
+                const tracksMap = new Map();
+                (likedData.tracks || []).forEach(item => {
+                    if (item.beat) tracksMap.set(item.beat.id, item.beat);
+                });
+                (dlData.library || []).forEach(item => {
+                    if (item.beat) tracksMap.set(item.beat.id, item.beat);
+                });
+
+                const tracks = Array.from(tracksMap.values());
+
+                if (tracks.length > 0) {
+                    container.innerHTML = tracks.map(beat => `
+                        <div class="curate-track-option" data-track-id="${beat.id}" onclick="toggleCurateTrack(${beat.id})">
+                            <div class="curate-track-checkbox">
+                                <i data-lucide="check" class="lucide-icon"></i>
+                            </div>
+                            <img src="${beat.cover_url || '/static/images/default-cover.png'}" alt="" class="curate-track-cover">
+                            <div class="curate-track-info">
+                                <div class="curate-track-title">${beat.title}</div>
+                                <div class="curate-track-artist">${beat.creator_name || 'Unknown'}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    lucide.createIcons();
+                } else {
+                    container.innerHTML = `
+                        <div style="padding: 40px 20px; text-align: center; color: #666;">
+                            <p>No tracks available. Like or download some tracks first!</p>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff4444;">Failed to load tracks</div>';
+            }
+        }
+
+        // Toggle track selection in curate modal
+        function toggleCurateTrack(trackId) {
+            const option = document.querySelector(`.curate-track-option[data-track-id="${trackId}"]`);
+            if (!option) return;
+
+            if (selectedCurateTracks.has(trackId)) {
+                selectedCurateTracks.delete(trackId);
+                option.classList.remove('selected');
+            } else {
+                selectedCurateTracks.add(trackId);
+                option.classList.add('selected');
+            }
+
+            // Enable/disable create button
+            const nameInput = document.getElementById('curatePackName');
+            const createBtn = document.getElementById('createCuratedPackBtn');
+            createBtn.disabled = !nameInput.value.trim() || selectedCurateTracks.size === 0;
+        }
+
+        // Validate curate form
+        document.getElementById('curatePackName')?.addEventListener('input', function() {
+            const createBtn = document.getElementById('createCuratedPackBtn');
+            createBtn.disabled = !this.value.trim() || selectedCurateTracks.size === 0;
+        });
+
+        // Create curated pack
+        async function createCuratedPack() {
+            const name = document.getElementById('curatePackName').value.trim();
+            const recipient = document.getElementById('curateRecipient').value.trim();
+            const description = document.getElementById('curateDescription').value.trim();
+            const isFree = document.getElementById('curateFreeToggle').checked;
+            const trackIds = Array.from(selectedCurateTracks);
+
+            if (!name || trackIds.length === 0) {
+                showToast('Please enter a name and select at least one track', 'error');
+                return;
+            }
+
+            const createBtn = document.getElementById('createCuratedPackBtn');
+            createBtn.disabled = true;
+            createBtn.textContent = 'Creating...';
+
+            try {
+                const response = await fetch('/api/beatpax/curated', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        recipient_name: recipient || null,
+                        description: description || null,
+                        is_free: isFree,
+                        track_ids: trackIds
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Curated pack created!', 'success');
+                    closeCurateModal();
+                    loadCuratedPacks();
+                    updateSidebarCounts();
+
+                    // Copy link automatically
+                    if (data.pack && data.pack.share_code) {
+                        copyCuratedLink(data.pack.share_code);
+                    }
+                } else {
+                    showToast(data.error || 'Failed to create pack', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to create pack', 'error');
+            }
+
+            createBtn.disabled = false;
+            createBtn.textContent = 'Create Pack';
+        }
+
+        // Sidebar toggle for mobile
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            const sidebar = document.getElementById('beatpaxSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        });
+
+        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+            const sidebar = document.getElementById('beatpaxSidebar');
+            this.classList.remove('active');
+            sidebar.classList.remove('open');
+        });
+
         // Initial load
         loadCatalog();
+
+        // Load sidebar data
+        loadLikedTrackIds();
+        updateSidebarCounts();
     </script>
 </body>
 </html>

@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from functools import wraps
 from werkzeug.utils import secure_filename
 from PIL import Image
-from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, DocumentUpload, AdminMessage, SupportChat, SoundPack, Beat, Wallet, Transaction, UserBeatLibrary
+from models import db, ChatMessage, MessageAttachment, User, Feedback, UserProfile, DocumentUpload, AdminMessage, SupportChat, SoundPack, Beat, Wallet, Transaction, UserBeatLibrary, UserLikedTrack, CuratedPack, CuratedPackTrack
 import blob_storage
 from chroma_client import (
     get_collection, add_document_chunks, query_documents,
@@ -2464,6 +2464,414 @@ def beatpax_public_pack(pack_id):
     except Exception as e:
         print(f"Error fetching public pack: {e}")
         return jsonify({'error': 'Failed to fetch sound pack'}), 500
+
+
+# =============================================================================
+# Liked Tracks API Endpoints
+# =============================================================================
+
+@app.route('/api/beatpax/liked')
+@login_required
+def get_liked_tracks():
+    """Get user's liked tracks with full beat data"""
+    user_id = session.get('user_id')
+
+    try:
+        liked = UserLikedTrack.query.filter_by(user_id=user_id).order_by(
+            UserLikedTrack.liked_at.desc()
+        ).all()
+
+        return jsonify({
+            'tracks': [entry.to_dict() for entry in liked],
+            'count': len(liked)
+        })
+    except Exception as e:
+        print(f"Error fetching liked tracks: {e}")
+        return jsonify({'error': 'Failed to fetch liked tracks'}), 500
+
+
+@app.route('/api/beatpax/liked/ids')
+@login_required
+def get_liked_track_ids():
+    """Get just the IDs of liked tracks for UI state"""
+    user_id = session.get('user_id')
+
+    try:
+        liked = UserLikedTrack.query.filter_by(user_id=user_id).all()
+        return jsonify({
+            'liked_ids': [entry.beat_id for entry in liked]
+        })
+    except Exception as e:
+        print(f"Error fetching liked track IDs: {e}")
+        return jsonify({'error': 'Failed to fetch liked track IDs'}), 500
+
+
+@app.route('/api/beatpax/beats/<int:beat_id>/like', methods=['POST'])
+@login_required
+def toggle_track_like(beat_id):
+    """Toggle like on a track"""
+    user_id = session.get('user_id')
+
+    try:
+        beat = Beat.query.get(beat_id)
+        if not beat or not beat.is_active:
+            return jsonify({'error': 'Track not found'}), 404
+
+        # Check if already liked
+        existing = UserLikedTrack.query.filter_by(
+            user_id=user_id, beat_id=beat_id
+        ).first()
+
+        if existing:
+            # Unlike
+            db.session.delete(existing)
+            db.session.commit()
+            return jsonify({
+                'liked': False,
+                'message': 'Removed from liked'
+            })
+        else:
+            # Like
+            new_like = UserLikedTrack(user_id=user_id, beat_id=beat_id)
+            db.session.add(new_like)
+            db.session.commit()
+            return jsonify({
+                'liked': True,
+                'message': 'Added to liked!'
+            })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error toggling like: {e}")
+        return jsonify({'error': 'Failed to toggle like'}), 500
+
+
+# =============================================================================
+# Curated Packs API Endpoints
+# =============================================================================
+
+import secrets
+
+def generate_share_code():
+    """Generate a unique 8-character share code"""
+    while True:
+        code = secrets.token_urlsafe(6)[:8]
+        if not CuratedPack.query.filter_by(share_code=code).first():
+            return code
+
+
+@app.route('/api/beatpax/curated', methods=['GET'])
+@login_required
+def get_curated_packs():
+    """Get user's curated packs"""
+    user_id = session.get('user_id')
+
+    try:
+        packs = CuratedPack.query.filter_by(
+            user_id=user_id, is_active=True
+        ).order_by(CuratedPack.created_at.desc()).all()
+
+        return jsonify({
+            'packs': [pack.to_dict(include_tracks=True) for pack in packs],
+            'count': len(packs)
+        })
+    except Exception as e:
+        print(f"Error fetching curated packs: {e}")
+        return jsonify({'error': 'Failed to fetch curated packs'}), 500
+
+
+@app.route('/api/beatpax/curated', methods=['POST'])
+@login_required
+def create_curated_pack():
+    """Create a new curated pack"""
+    user_id = session.get('user_id')
+
+    try:
+        data = request.get_json()
+        name = data.get('name', '').strip()
+        if not name:
+            return jsonify({'error': 'Pack name is required'}), 400
+
+        track_ids = data.get('track_ids', [])
+        if not track_ids:
+            return jsonify({'error': 'At least one track is required'}), 400
+
+        # Verify all tracks exist
+        for track_id in track_ids:
+            beat = Beat.query.get(track_id)
+            if not beat or not beat.is_active:
+                return jsonify({'error': f'Track {track_id} not found'}), 404
+
+        # Create the pack
+        pack = CuratedPack(
+            user_id=user_id,
+            name=name,
+            description=data.get('description', '').strip() or None,
+            recipient_name=data.get('recipient_name', '').strip() or None,
+            share_code=generate_share_code(),
+            is_free=data.get('is_free', False)
+        )
+        db.session.add(pack)
+        db.session.flush()  # Get the pack ID
+
+        # Add tracks
+        for order, track_id in enumerate(track_ids):
+            track_entry = CuratedPackTrack(
+                curated_pack_id=pack.id,
+                beat_id=track_id,
+                track_order=order
+            )
+            db.session.add(track_entry)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'pack': pack.to_dict(include_tracks=True),
+            'message': 'Curated pack created!'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating curated pack: {e}")
+        return jsonify({'error': 'Failed to create curated pack'}), 500
+
+
+@app.route('/api/beatpax/curated/<int:pack_id>', methods=['PUT'])
+@login_required
+def update_curated_pack(pack_id):
+    """Update a curated pack"""
+    user_id = session.get('user_id')
+
+    try:
+        pack = CuratedPack.query.get(pack_id)
+        if not pack or not pack.is_active:
+            return jsonify({'error': 'Curated pack not found'}), 404
+
+        if pack.user_id != user_id:
+            return jsonify({'error': 'You can only edit your own packs'}), 403
+
+        data = request.get_json()
+
+        if 'name' in data:
+            pack.name = data['name'].strip()
+        if 'description' in data:
+            pack.description = data['description'].strip() or None
+        if 'recipient_name' in data:
+            pack.recipient_name = data['recipient_name'].strip() or None
+        if 'is_free' in data:
+            pack.is_free = data['is_free']
+
+        # Update tracks if provided
+        if 'track_ids' in data:
+            track_ids = data['track_ids']
+            if not track_ids:
+                return jsonify({'error': 'At least one track is required'}), 400
+
+            # Verify all tracks exist
+            for track_id in track_ids:
+                beat = Beat.query.get(track_id)
+                if not beat or not beat.is_active:
+                    return jsonify({'error': f'Track {track_id} not found'}), 404
+
+            # Remove existing tracks
+            CuratedPackTrack.query.filter_by(curated_pack_id=pack.id).delete()
+
+            # Add new tracks
+            for order, track_id in enumerate(track_ids):
+                track_entry = CuratedPackTrack(
+                    curated_pack_id=pack.id,
+                    beat_id=track_id,
+                    track_order=order
+                )
+                db.session.add(track_entry)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'pack': pack.to_dict(include_tracks=True),
+            'message': 'Curated pack updated!'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating curated pack: {e}")
+        return jsonify({'error': 'Failed to update curated pack'}), 500
+
+
+@app.route('/api/beatpax/curated/<int:pack_id>', methods=['DELETE'])
+@login_required
+def delete_curated_pack(pack_id):
+    """Delete a curated pack"""
+    user_id = session.get('user_id')
+
+    try:
+        pack = CuratedPack.query.get(pack_id)
+        if not pack:
+            return jsonify({'error': 'Curated pack not found'}), 404
+
+        if pack.user_id != user_id:
+            return jsonify({'error': 'You can only delete your own packs'}), 403
+
+        # Soft delete
+        pack.is_active = False
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Curated pack deleted!'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting curated pack: {e}")
+        return jsonify({'error': 'Failed to delete curated pack'}), 500
+
+
+@app.route('/beatpax/curated/<share_code>')
+def view_curated_pack(share_code):
+    """Public page to view a shared curated pack"""
+    try:
+        pack = CuratedPack.query.filter_by(share_code=share_code, is_active=True).first()
+        if not pack:
+            return render_template('beatpax_curated.html', pack=None, error='Pack not found')
+
+        # Increment view count
+        pack.view_count += 1
+        db.session.commit()
+
+        # Check if user is logged in
+        is_logged_in = session.get('authenticated', False)
+        user_id = session.get('user_id')
+        wallet_balance = 0
+
+        if is_logged_in and user_id:
+            wallet = Wallet.query.filter_by(user_id=user_id).first()
+            wallet_balance = wallet.balance if wallet else 0
+
+        pack_data = pack.to_dict(include_tracks=True)
+
+        return render_template('beatpax_curated.html',
+                               pack=pack_data,
+                               is_logged_in=is_logged_in,
+                               wallet_balance=wallet_balance,
+                               error=None)
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error viewing curated pack: {e}")
+        return render_template('beatpax_curated.html', pack=None, error='Failed to load pack')
+
+
+@app.route('/api/beatpax/curated/<share_code>/download', methods=['POST'])
+def download_curated_pack(share_code):
+    """Download tracks from a curated pack"""
+    try:
+        pack = CuratedPack.query.filter_by(share_code=share_code, is_active=True).first()
+        if not pack:
+            return jsonify({'error': 'Pack not found'}), 404
+
+        # Get track IDs from request (optional - can download specific tracks)
+        data = request.get_json() or {}
+        requested_track_ids = data.get('track_ids')
+
+        # Get all tracks in the pack
+        pack_tracks = CuratedPackTrack.query.filter_by(curated_pack_id=pack.id).all()
+        track_ids = [t.beat_id for t in pack_tracks]
+
+        # If specific tracks requested, filter to those
+        if requested_track_ids:
+            track_ids = [tid for tid in track_ids if tid in requested_track_ids]
+
+        if not track_ids:
+            return jsonify({'error': 'No tracks to download'}), 400
+
+        # If pack is free, allow download without login
+        if pack.is_free:
+            pack.download_count += 1
+            db.session.commit()
+
+            # Return track download URLs
+            tracks = Beat.query.filter(Beat.id.in_(track_ids), Beat.is_active == True).all()
+            return jsonify({
+                'success': True,
+                'is_free': True,
+                'tracks': [{'id': t.id, 'title': t.title, 'audio_url': t.audio_url} for t in tracks],
+                'message': 'Enjoy your free tracks!'
+            })
+
+        # For paid packs, require login
+        if not session.get('authenticated'):
+            return jsonify({'error': 'Login required to download', 'require_login': True}), 401
+
+        user_id = session.get('user_id')
+
+        # Check wallet balance
+        wallet = Wallet.query.filter_by(user_id=user_id).first()
+        if not wallet:
+            wallet = Wallet(user_id=user_id, balance=50)
+            db.session.add(wallet)
+
+        # Calculate cost (1 token per track, skip already owned)
+        tracks_to_download = []
+        for track_id in track_ids:
+            existing = UserBeatLibrary.query.filter_by(
+                user_id=user_id, beat_id=track_id
+            ).first()
+            if not existing:
+                tracks_to_download.append(track_id)
+
+        if not tracks_to_download:
+            return jsonify({
+                'success': True,
+                'message': 'You already own all these tracks!',
+                'tracks_added': 0
+            })
+
+        total_cost = len(tracks_to_download)  # 1 token per track
+
+        if wallet.balance < total_cost:
+            return jsonify({
+                'error': f'Insufficient tokens. Need {total_cost}, have {wallet.balance}',
+                'balance': wallet.balance,
+                'cost': total_cost
+            }), 400
+
+        # Process purchase
+        wallet.balance -= total_cost
+        wallet.total_spent += total_cost
+
+        for track_id in tracks_to_download:
+            library_entry = UserBeatLibrary(
+                user_id=user_id,
+                beat_id=track_id,
+                tokens_spent=1
+            )
+            db.session.add(library_entry)
+
+            # Record transaction
+            transaction = Transaction(
+                user_id=user_id,
+                transaction_type='spend',
+                amount=-1,
+                balance_after=wallet.balance,
+                reference_type='curated_pack_download',
+                reference_id=track_id,
+                description=f'Downloaded from curated pack: {pack.name}'
+            )
+            db.session.add(transaction)
+
+        pack.download_count += 1
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'tracks_added': len(tracks_to_download),
+            'tokens_spent': total_cost,
+            'new_balance': wallet.balance,
+            'message': f'Added {len(tracks_to_download)} tracks to your library!'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error downloading curated pack: {e}")
+        return jsonify({'error': 'Failed to download pack'}), 500
 
 
 # Create database tables on app startup (only in development)
