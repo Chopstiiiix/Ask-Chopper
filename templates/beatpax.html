@@ -2888,9 +2888,6 @@
                         <button class="player-control-btn" id="playerPrevBtn" title="Previous">
                             <i data-lucide="skip-back" class="lucide-icon"></i>
                         </button>
-                        <button class="player-control-btn" id="playerStopBtn" title="Stop">
-                            <i data-lucide="square" class="lucide-icon"></i>
-                        </button>
                         <button class="player-control-btn main" id="playerPlayPauseBtn" title="Play/Pause">
                             <i data-lucide="play" class="lucide-icon" id="playPauseIcon"></i>
                         </button>
@@ -3676,10 +3673,10 @@
                 trackList.innerHTML = pack.tracks.map((track, index) => `
                     <div class="pack-track-item" data-track-index="${index}" data-track-id="${track.id}">
                         <span class="pack-track-num">${index + 1}</span>
-                        <button class="pack-track-play" onclick="event.stopPropagation(); playPackTrack(${packId}, ${index})">
+                        <button class="pack-track-play" onclick="event.stopPropagation(); toggleTrackPlayPause(${packId}, ${index})">
                             <i data-lucide="play" class="lucide-icon"></i>
                         </button>
-                        <div class="pack-track-info" onclick="playPackTrack(${packId}, ${index})">
+                        <div class="pack-track-info" onclick="toggleTrackPlayPause(${packId}, ${index})">
                             <div class="pack-track-title">${track.title}</div>
                             <div class="pack-track-meta">
                                 ${track.bpm ? `<span>${track.bpm} BPM</span>` : ''}
@@ -3704,6 +3701,23 @@
             // Show modal and hide player bar initially
             document.getElementById('packDetailPanel').classList.add('active');
             lucide.createIcons();
+        }
+
+        // Toggle play/pause for a specific track
+        function toggleTrackPlayPause(packId, trackIndex) {
+            const audio = document.getElementById('audioElement');
+
+            // If this is the current track, toggle play/pause
+            if (currentPackId === packId && currentPackTrackIndex === trackIndex) {
+                if (isPlaying) {
+                    audio.pause();
+                } else {
+                    audio.play();
+                }
+            } else {
+                // Different track, start playing it
+                playPackTrack(packId, trackIndex);
+            }
         }
 
         // Toggle track like
@@ -3868,7 +3882,6 @@
 
         // Player bar event listeners
         document.getElementById('playerPlayPauseBtn').addEventListener('click', togglePlayPause);
-        document.getElementById('playerStopBtn').addEventListener('click', stopPlayback);
         document.getElementById('playerPrevBtn').addEventListener('click', previousTrack);
         document.getElementById('playerNextBtn').addEventListener('click', nextTrack);
 
@@ -3917,12 +3930,29 @@
         audioElement.addEventListener('pause', () => {
             isPlaying = false;
             updatePlayPauseButton();
+            updateTrackIcons();
         });
 
         audioElement.addEventListener('play', () => {
             isPlaying = true;
             updatePlayPauseButton();
+            updateTrackIcons();
         });
+
+        // Update track play/pause icons based on current state
+        function updateTrackIcons() {
+            document.querySelectorAll('.pack-track-item').forEach((item, index) => {
+                const playIcon = item.querySelector('.pack-track-play .lucide-icon');
+                if (playIcon) {
+                    if (index === currentPackTrackIndex && isPlaying) {
+                        playIcon.setAttribute('data-lucide', 'pause');
+                    } else {
+                        playIcon.setAttribute('data-lucide', 'play');
+                    }
+                }
+            });
+            lucide.createIcons();
+        }
 
         function formatTime(seconds) {
             if (isNaN(seconds)) return '0:00';
