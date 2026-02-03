@@ -1502,44 +1502,43 @@ def beatpax_wallet():
 @app.route('/api/beatpax/explore')
 @login_required
 def beatpax_explore():
-    """Get catalog data for explore page"""
+    """Get catalog data for explore page - returns sound packs"""
     user_id = session.get('user_id')
 
     try:
-        # Featured/Hero beat
-        hero_beat = Beat.query.filter_by(is_featured=True, is_active=True).first()
-
-        # New releases (latest 8)
-        new_releases = Beat.query.filter_by(is_active=True).order_by(
-            Beat.created_at.desc()
-        ).limit(8).all()
-
-        # Trending (most downloads in last period)
-        trending = Beat.query.filter_by(is_active=True).order_by(
-            Beat.download_count.desc()
-        ).limit(8).all()
-
-        # Super fresh (last 24 hours, fallback to week)
         from datetime import timedelta
-        fresh_cutoff = datetime.utcnow() - timedelta(hours=24)
-        fresh = Beat.query.filter(
-            Beat.is_active == True,
-            Beat.created_at >= fresh_cutoff
-        ).order_by(Beat.created_at.desc()).limit(8).all()
 
-        if len(fresh) < 4:
-            fresh_cutoff = datetime.utcnow() - timedelta(days=7)
-            fresh = Beat.query.filter(
-                Beat.is_active == True,
-                Beat.created_at >= fresh_cutoff
-            ).order_by(Beat.created_at.desc()).limit(8).all()
+        # Featured sound pack
+        hero_pack = SoundPack.query.filter_by(is_featured=True, is_active=True).first()
+        if not hero_pack:
+            # Fall back to most downloaded pack
+            hero_pack = SoundPack.query.filter_by(is_active=True).order_by(
+                SoundPack.download_count.desc()
+            ).first()
 
-        # Top creators
+        # New releases - latest sound packs
+        new_releases = SoundPack.query.filter_by(is_active=True).order_by(
+            SoundPack.created_at.desc()
+        ).limit(12).all()
+
+        # Trending - most downloaded packs
+        trending = SoundPack.query.filter_by(is_active=True).order_by(
+            SoundPack.download_count.desc()
+        ).limit(6).all()
+
+        # Fresh - recent packs (last week)
+        fresh_cutoff = datetime.utcnow() - timedelta(days=7)
+        fresh = SoundPack.query.filter(
+            SoundPack.is_active == True,
+            SoundPack.created_at >= fresh_cutoff
+        ).order_by(SoundPack.created_at.desc()).limit(6).all()
+
+        # Top creators (by pack count and downloads)
         top_creators = db.session.query(
             User.id, User.first_name, User.surname,
-            db.func.count(Beat.id).label('beat_count'),
-            db.func.sum(Beat.download_count).label('total_downloads')
-        ).join(Beat).filter(Beat.is_active == True).group_by(
+            db.func.count(SoundPack.id).label('pack_count'),
+            db.func.sum(SoundPack.download_count).label('total_downloads')
+        ).join(SoundPack).filter(SoundPack.is_active == True).group_by(
             User.id
         ).order_by(db.desc('total_downloads')).limit(6).all()
 
@@ -1548,18 +1547,27 @@ def beatpax_explore():
             user_id=user_id
         ).all()]
 
+        # Get owned pack IDs (if user owns any track from a pack, they own the pack)
+        owned_pack_ids = list(set([
+            beat.sound_pack_id for beat in Beat.query.join(UserBeatLibrary).filter(
+                UserBeatLibrary.user_id == user_id,
+                Beat.sound_pack_id != None
+            ).all()
+        ]))
+
         return jsonify({
-            'hero': hero_beat.to_dict() if hero_beat else None,
-            'new_releases': [b.to_dict() for b in new_releases],
-            'trending': [b.to_dict() for b in trending],
-            'fresh': [b.to_dict() for b in fresh],
+            'hero': hero_pack.to_dict(include_tracks=True) if hero_pack else None,
+            'new_releases': [p.to_dict(include_tracks=True) for p in new_releases],
+            'trending': [p.to_dict(include_tracks=True) for p in trending],
+            'fresh': [p.to_dict(include_tracks=True) for p in fresh],
             'top_creators': [{
                 'id': c.id,
                 'name': f"{c.first_name} {c.surname}",
-                'beat_count': c.beat_count,
+                'pack_count': c.pack_count,
                 'total_downloads': c.total_downloads or 0
             } for c in top_creators],
-            'owned_beat_ids': owned_beat_ids
+            'owned_beat_ids': owned_beat_ids,
+            'owned_pack_ids': owned_pack_ids
         })
     except Exception as e:
         print(f"Error in beatpax explore: {e}")
@@ -1571,7 +1579,7 @@ def beatpax_explore():
 @app.route('/api/beatpax/beats')
 @login_required
 def beatpax_beats():
-    """Get beats with optional filtering"""
+    """Get sound packs with optional filtering"""
     genre = request.args.get('genre')
     search = request.args.get('search')
     sort = request.args.get('sort', 'newest')
@@ -1579,7 +1587,7 @@ def beatpax_beats():
     per_page = request.args.get('per_page', 20, type=int)
 
     try:
-        query = Beat.query.filter_by(is_active=True)
+        query = SoundPack.query.filter_by(is_active=True)
 
         if genre and genre != 'all':
             query = query.filter_by(genre=genre)
@@ -1588,33 +1596,33 @@ def beatpax_beats():
             search_term = f"%{search}%"
             query = query.filter(
                 db.or_(
-                    Beat.title.ilike(search_term),
-                    Beat.tags.ilike(search_term)
+                    SoundPack.name.ilike(search_term),
+                    SoundPack.tags.ilike(search_term)
                 )
             )
 
         if sort == 'newest':
-            query = query.order_by(Beat.created_at.desc())
+            query = query.order_by(SoundPack.created_at.desc())
         elif sort == 'popular':
-            query = query.order_by(Beat.download_count.desc())
+            query = query.order_by(SoundPack.download_count.desc())
         elif sort == 'trending':
-            query = query.order_by(Beat.play_count.desc())
+            query = query.order_by(SoundPack.play_count.desc())
         elif sort == 'price_low':
-            query = query.order_by(Beat.token_cost.asc())
+            query = query.order_by(SoundPack.token_cost.asc())
         elif sort == 'price_high':
-            query = query.order_by(Beat.token_cost.desc())
+            query = query.order_by(SoundPack.token_cost.desc())
 
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
 
         return jsonify({
-            'beats': [b.to_dict() for b in paginated.items],
+            'packs': [p.to_dict(include_tracks=True) for p in paginated.items],
             'total': paginated.total,
             'pages': paginated.pages,
             'current_page': page
         })
     except Exception as e:
-        print(f"Error fetching beats: {e}")
-        return jsonify({'error': 'Failed to fetch beats'}), 500
+        print(f"Error fetching packs: {e}")
+        return jsonify({'error': 'Failed to fetch packs'}), 500
 
 
 @app.route('/api/beatpax/upload-config', methods=['GET'])

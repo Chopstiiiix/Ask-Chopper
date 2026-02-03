@@ -439,6 +439,305 @@
             font-weight: 500;
         }
 
+        /* Pack Card - track count badge */
+        .pack-track-count {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .pack-track-count .lucide-icon {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Pack Detail Modal */
+        .pack-detail-panel {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: none;
+            overflow-y: auto;
+        }
+
+        .pack-detail-panel.active {
+            display: block;
+        }
+
+        .pack-detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .pack-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .pack-detail-close {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .pack-detail-close:hover {
+            color: #fff;
+        }
+
+        .pack-detail-main {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 700px) {
+            .pack-detail-main {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+
+        .pack-detail-cover {
+            width: 280px;
+            height: 280px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #1a1a1a;
+        }
+
+        .pack-detail-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .pack-detail-type {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .pack-detail-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .pack-detail-creator {
+            color: #888;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .pack-detail-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .pack-detail-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .pack-detail-meta-item .lucide-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .pack-detail-genre {
+            display: inline-block;
+            padding: 6px 14px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .pack-detail-price {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #2d2d2d;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffd700;
+            margin-top: 16px;
+        }
+
+        .pack-detail-price .lucide-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .pack-detail-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 700px) {
+            .pack-detail-actions {
+                justify-content: center;
+            }
+        }
+
+        .pack-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .pack-action-btn.primary {
+            background: #fff;
+            color: #000;
+        }
+
+        .pack-action-btn.primary:hover {
+            background: #e0e0e0;
+        }
+
+        .pack-action-btn.secondary {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #2d2d2d;
+        }
+
+        .pack-action-btn.secondary:hover {
+            background: #2d2d2d;
+        }
+
+        .pack-action-btn .lucide-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Pack Tracks List */
+        .pack-tracks-section {
+            background: #0d0d0d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .pack-tracks-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .pack-track-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pack-track-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 20px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .pack-track-item:hover {
+            background: #1a1a1a;
+        }
+
+        .pack-track-item.playing {
+            background: #1a1a1a;
+        }
+
+        .pack-track-num {
+            width: 28px;
+            text-align: center;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .pack-track-item:hover .pack-track-num,
+        .pack-track-item.playing .pack-track-num {
+            display: none;
+        }
+
+        .pack-track-play {
+            width: 28px;
+            height: 28px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .pack-track-item:hover .pack-track-play,
+        .pack-track-item.playing .pack-track-play {
+            display: flex;
+        }
+
+        .pack-track-play .lucide-icon {
+            width: 14px;
+            height: 14px;
+            color: #000;
+        }
+
+        .pack-track-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pack-track-title {
+            font-size: 15px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pack-track-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
         /* Lower Grid - Trending/Fresh/Creators */
         .lower-grid {
             display: grid;
@@ -1936,10 +2235,10 @@
             </div>
         </div>
 
-        <!-- New Releases Section -->
+        <!-- Sound Packs Section -->
         <div class="section" id="new-releases">
             <div class="section-header">
-                <h2 class="section-title">New Releases</h2>
+                <h2 class="section-title">Sound Packs</h2>
                 <a href="#" class="section-link">
                     See All <i data-lucide="chevron-right" class="lucide-icon"></i>
                 </a>
@@ -1953,11 +2252,11 @@
 
         <!-- Lower Grid -->
         <div class="lower-grid">
-            <!-- Trending -->
+            <!-- Trending Packs -->
             <div class="lower-section">
                 <h3 class="lower-section-title">
                     <i data-lucide="trending-up" class="lucide-icon"></i>
-                    Trending
+                    Trending Packs
                 </h3>
                 <div class="lower-beat-list" id="trendingList">
                     <div class="loading">
@@ -1966,11 +2265,11 @@
                 </div>
             </div>
 
-            <!-- Super Fresh -->
+            <!-- Fresh Packs -->
             <div class="lower-section">
                 <h3 class="lower-section-title">
                     <i data-lucide="sparkles" class="lucide-icon"></i>
-                    Super Fresh
+                    Fresh Packs
                 </h3>
                 <div class="lower-beat-list" id="freshList">
                     <div class="loading">
@@ -2242,6 +2541,61 @@
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Pack Detail Modal -->
+    <div class="pack-detail-panel" id="packDetailPanel">
+        <div class="pack-detail-container">
+            <div class="pack-detail-header">
+                <span></span>
+                <button class="pack-detail-close" id="closePackDetail">
+                    <i data-lucide="x" class="lucide-icon"></i>
+                </button>
+            </div>
+            <div class="pack-detail-main">
+                <img src="" alt="" class="pack-detail-cover" id="packDetailCover">
+                <div class="pack-detail-info">
+                    <div class="pack-detail-type">Sound Pack</div>
+                    <h1 class="pack-detail-title" id="packDetailTitle">Pack Name</h1>
+                    <p class="pack-detail-creator" id="packDetailCreator">by Creator</p>
+                    <div class="pack-detail-meta">
+                        <span class="pack-detail-meta-item">
+                            <i data-lucide="music" class="lucide-icon"></i>
+                            <span id="packDetailTrackCount">0 tracks</span>
+                        </span>
+                        <span class="pack-detail-meta-item">
+                            <i data-lucide="headphones" class="lucide-icon"></i>
+                            <span id="packDetailPlayCount">0 plays</span>
+                        </span>
+                        <span class="pack-detail-genre" id="packDetailGenre">Genre</span>
+                    </div>
+                    <div class="pack-detail-price" id="packDetailPrice">
+                        <i data-lucide="coins" class="lucide-icon"></i>
+                        <span>0 tokens</span>
+                    </div>
+                    <div class="pack-detail-actions">
+                        <button class="pack-action-btn primary" id="packPlayAllBtn">
+                            <i data-lucide="play" class="lucide-icon"></i>
+                            Play All
+                        </button>
+                        <button class="pack-action-btn secondary" id="packDownloadBtn">
+                            <i data-lucide="download" class="lucide-icon"></i>
+                            Download
+                        </button>
+                        <button class="pack-action-btn secondary" id="packShareBtn">
+                            <i data-lucide="share-2" class="lucide-icon"></i>
+                            Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="pack-tracks-section">
+                <div class="pack-tracks-header">Tracks</div>
+                <div class="pack-track-list" id="packTrackList">
+                    <!-- Track items will be populated here -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2915,36 +3269,38 @@
             }, 3000);
         }
 
-        // Create beat card HTML
-        function createBeatCard(beat) {
-            const owned = ownedBeatIds.includes(beat.id);
-            // Use sound_pack_id for share link if available, otherwise use beat id
-            const shareId = beat.sound_pack_id || beat.id;
-            const shareType = beat.sound_pack_id ? 'pack' : 'beat';
+        // Create pack card HTML
+        function createPackCard(pack) {
+            const owned = ownedPackIds.includes(pack.id);
+            const trackCount = pack.track_count || (pack.tracks ? pack.tracks.length : 0);
             return `
-                <div class="beat-card" data-beat-id="${beat.id}" onclick="playBeat(${beat.id})">
+                <div class="beat-card" data-pack-id="${pack.id}" onclick="openPackDetail(${pack.id})">
                     <div class="beat-cover">
-                        ${beat.cover_url ?
-                            `<img src="${beat.cover_url}" alt="${beat.title}">` :
-                            `<div class="placeholder-icon"><i data-lucide="music" class="lucide-icon"></i></div>`
+                        ${pack.cover_url ?
+                            `<img src="${pack.cover_url}" alt="${pack.name}">` :
+                            `<div class="placeholder-icon"><i data-lucide="disc" class="lucide-icon"></i></div>`
                         }
                         <div class="beat-play-overlay">
-                            <button class="share-btn" onclick="event.stopPropagation(); sharePack(${shareId}, '${shareType}')" title="Share">
+                            <button class="share-btn" onclick="event.stopPropagation(); sharePackLink(${pack.id})" title="Share">
                                 <i data-lucide="share-2" class="lucide-icon"></i>
                             </button>
-                            <button class="play-btn">
+                            <button class="play-btn" onclick="event.stopPropagation(); playPackFirst(${pack.id})">
                                 <i data-lucide="play" class="lucide-icon"></i>
                             </button>
                         </div>
+                        <div class="pack-track-count">
+                            <i data-lucide="music" class="lucide-icon"></i>
+                            ${trackCount} tracks
+                        </div>
                     </div>
                     <div class="beat-info">
-                        <div class="beat-title">${beat.title}</div>
-                        <div class="beat-creator">${beat.creator_name || 'Unknown'}</div>
+                        <div class="beat-title">${pack.name}</div>
+                        <div class="beat-creator">${pack.creator_name || 'Unknown'}</div>
                         <div class="beat-meta">
-                            <span class="beat-genre">${beat.genre}</span>
+                            <span class="beat-genre">${pack.genre}</span>
                             ${owned ?
                                 `<span class="beat-owned">Owned</span>` :
-                                `<span class="beat-price"><i data-lucide="coins" class="lucide-icon"></i> ${beat.token_cost}</span>`
+                                `<span class="beat-price"><i data-lucide="coins" class="lucide-icon"></i> ${pack.token_cost}</span>`
                             }
                         </div>
                     </div>
@@ -2952,16 +3308,18 @@
             `;
         }
 
-        // Share pack/beat
-        function sharePack(id, type) {
-            const url = type === 'pack'
-                ? `${window.location.origin}/beatpax/pack/${id}`
-                : `${window.location.origin}/beatpax/pack/${id}`;
+        // Store packs data for detail view
+        let packsData = {};
+        let ownedPackIds = [];
+        let currentPackId = null;
+        let currentPackTrackIndex = 0;
 
+        // Share pack link
+        function sharePackLink(packId) {
+            const url = `${window.location.origin}/beatpax/pack/${packId}`;
             navigator.clipboard.writeText(url).then(() => {
                 showToast('Share link copied to clipboard!', 'success');
             }).catch(() => {
-                // Fallback for older browsers
                 const input = document.createElement('input');
                 input.value = url;
                 document.body.appendChild(input);
@@ -2972,22 +3330,142 @@
             });
         }
 
-        // Create lower beat item HTML
-        function createLowerBeatItem(beat) {
+        // Open pack detail modal
+        function openPackDetail(packId) {
+            const pack = packsData[packId];
+            if (!pack) return;
+
+            currentPackId = packId;
+
+            // Populate modal
+            document.getElementById('packDetailCover').src = pack.cover_url || '';
+            document.getElementById('packDetailTitle').textContent = pack.name;
+            document.getElementById('packDetailCreator').textContent = `by ${pack.creator_name || 'Unknown'}`;
+            document.getElementById('packDetailTrackCount').textContent = `${pack.track_count || pack.tracks?.length || 0} tracks`;
+            document.getElementById('packDetailPlayCount').textContent = `${pack.play_count || 0} plays`;
+            document.getElementById('packDetailGenre').textContent = pack.genre;
+            document.getElementById('packDetailPrice').innerHTML = `<i data-lucide="coins" class="lucide-icon"></i> ${pack.token_cost} tokens`;
+
+            // Populate tracks
+            const trackList = document.getElementById('packTrackList');
+            if (pack.tracks && pack.tracks.length > 0) {
+                trackList.innerHTML = pack.tracks.map((track, index) => `
+                    <div class="pack-track-item" data-track-index="${index}" onclick="playPackTrack(${packId}, ${index})">
+                        <span class="pack-track-num">${index + 1}</span>
+                        <button class="pack-track-play">
+                            <i data-lucide="play" class="lucide-icon"></i>
+                        </button>
+                        <div class="pack-track-info">
+                            <div class="pack-track-title">${track.title}</div>
+                            <div class="pack-track-meta">
+                                ${track.bpm ? `<span>${track.bpm} BPM</span>` : ''}
+                                ${track.key ? `<span>${track.key}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                trackList.innerHTML = '<div style="padding: 20px; color: #666; text-align: center;">No tracks in this pack</div>';
+            }
+
+            // Show modal
+            document.getElementById('packDetailPanel').classList.add('active');
+            lucide.createIcons();
+        }
+
+        // Close pack detail modal
+        document.getElementById('closePackDetail').addEventListener('click', () => {
+            document.getElementById('packDetailPanel').classList.remove('active');
+        });
+
+        document.getElementById('packDetailPanel').addEventListener('click', (e) => {
+            if (e.target.id === 'packDetailPanel') {
+                document.getElementById('packDetailPanel').classList.remove('active');
+            }
+        });
+
+        // Play first track in pack
+        function playPackFirst(packId) {
+            playPackTrack(packId, 0);
+        }
+
+        // Play specific track in pack
+        function playPackTrack(packId, trackIndex) {
+            const pack = packsData[packId];
+            if (!pack || !pack.tracks || !pack.tracks[trackIndex]) return;
+
+            currentPackId = packId;
+            currentPackTrackIndex = trackIndex;
+            const track = pack.tracks[trackIndex];
+
+            // Update playing state in track list
+            document.querySelectorAll('.pack-track-item').forEach((item, i) => {
+                item.classList.toggle('playing', i === trackIndex);
+            });
+
+            // Play audio
+            const audio = document.getElementById('audioElement');
+            audio.src = track.audio_url;
+            audio.play();
+
+            // Record play
+            fetch(`/api/beatpax/beats/${track.id}/play`, { method: 'POST' });
+
+            showToast(`Playing: ${track.title}`, 'success');
+        }
+
+        // Pack detail action buttons
+        document.getElementById('packPlayAllBtn').addEventListener('click', () => {
+            if (currentPackId) playPackFirst(currentPackId);
+        });
+
+        document.getElementById('packShareBtn').addEventListener('click', () => {
+            if (currentPackId) sharePackLink(currentPackId);
+        });
+
+        document.getElementById('packDownloadBtn').addEventListener('click', async () => {
+            if (!currentPackId) return;
+            const pack = packsData[currentPackId];
+            if (!pack || !pack.tracks) return;
+
+            // Download first track as example (in real app, would download all or redirect)
+            const firstTrack = pack.tracks[0];
+            if (firstTrack) {
+                try {
+                    const response = await fetch(`/api/beatpax/beats/${firstTrack.id}/download`, {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.error) {
+                        showToast(data.error, 'error');
+                    } else {
+                        showToast('Pack added to your library!', 'success');
+                        // Update token display
+                        document.getElementById('tokenBalance').textContent = data.new_balance;
+                    }
+                } catch (e) {
+                    showToast('Failed to download pack', 'error');
+                }
+            }
+        });
+
+        // Create lower pack item HTML
+        function createLowerPackItem(pack) {
+            const trackCount = pack.track_count || (pack.tracks ? pack.tracks.length : 0);
             return `
-                <div class="lower-beat-item" data-beat-id="${beat.id}" onclick="playBeat(${beat.id})">
+                <div class="lower-beat-item" data-pack-id="${pack.id}" onclick="openPackDetail(${pack.id})">
                     <div class="lower-beat-cover">
-                        ${beat.cover_url ?
-                            `<img src="${beat.cover_url}" alt="${beat.title}">` :
-                            `<i data-lucide="music" class="lucide-icon"></i>`
+                        ${pack.cover_url ?
+                            `<img src="${pack.cover_url}" alt="${pack.name}">` :
+                            `<i data-lucide="disc" class="lucide-icon"></i>`
                         }
                     </div>
                     <div class="lower-beat-info">
-                        <div class="lower-beat-title">${beat.title}</div>
-                        <div class="lower-beat-creator">${beat.creator_name || 'Unknown'}</div>
+                        <div class="lower-beat-title">${pack.name}</div>
+                        <div class="lower-beat-creator">${pack.creator_name || 'Unknown'} • ${trackCount} tracks</div>
                     </div>
                     <div class="lower-beat-price">
-                        <i data-lucide="coins" class="lucide-icon"></i> ${beat.token_cost}
+                        <i data-lucide="coins" class="lucide-icon"></i> ${pack.token_cost}
                     </div>
                 </div>
             `;
@@ -3001,7 +3479,7 @@
                     <div class="creator-avatar">${initials}</div>
                     <div class="creator-info">
                         <div class="creator-name">${creator.name}</div>
-                        <div class="creator-stats">${creator.beat_count} beats - ${creator.total_downloads} downloads</div>
+                        <div class="creator-stats">${creator.pack_count || 0} packs - ${creator.total_downloads || 0} downloads</div>
                     </div>
                 </div>
             `;
@@ -3018,35 +3496,47 @@
                 }
 
                 ownedBeatIds = data.owned_beat_ids || [];
+                ownedPackIds = data.owned_pack_ids || [];
 
-                // New releases
+                // Store packs data for detail view
+                if (data.new_releases) {
+                    data.new_releases.forEach(pack => packsData[pack.id] = pack);
+                }
+                if (data.trending) {
+                    data.trending.forEach(pack => packsData[pack.id] = pack);
+                }
+                if (data.fresh) {
+                    data.fresh.forEach(pack => packsData[pack.id] = pack);
+                }
+
+                // Sound Packs grid
                 const newReleasesGrid = document.getElementById('newReleasesGrid');
                 if (data.new_releases && data.new_releases.length > 0) {
-                    newReleasesGrid.innerHTML = data.new_releases.map(createBeatCard).join('');
+                    newReleasesGrid.innerHTML = data.new_releases.map(createPackCard).join('');
                 } else {
                     newReleasesGrid.innerHTML = `
                         <div class="empty-state">
-                            <i data-lucide="music" class="lucide-icon"></i>
-                            <h3>No beats yet</h3>
-                            <p>Be the first to upload a beat!</p>
+                            <i data-lucide="disc" class="lucide-icon"></i>
+                            <h3>No sound packs yet</h3>
+                            <p>Be the first to upload a sound pack!</p>
                         </div>
                     `;
                 }
 
-                // Trending
+                // Trending Packs
                 const trendingList = document.getElementById('trendingList');
                 if (data.trending && data.trending.length > 0) {
-                    trendingList.innerHTML = data.trending.slice(0, 5).map(createLowerBeatItem).join('');
+                    trendingList.innerHTML = data.trending.slice(0, 5).map(createLowerPackItem).join('');
                 } else {
-                    trendingList.innerHTML = '<div class="empty-state"><p>No trending beats yet</p></div>';
+                    trendingList.innerHTML = '<div class="empty-state"><p>No trending packs yet</p></div>';
                 }
 
-                // Fresh
+                // Fresh Packs
                 const freshList = document.getElementById('freshList');
                 if (data.fresh && data.fresh.length > 0) {
-                    freshList.innerHTML = data.fresh.slice(0, 5).map(createLowerBeatItem).join('');
+                    freshList.innerHTML = data.fresh.slice(0, 5).map(createLowerPackItem).join('');
                 } else {
-                    freshList.innerHTML = '<div class="empty-state"><p>No fresh beats yet</p></div>';
+                    freshList.innerHTML = '<div class="empty-state"><p>No fresh packs yet</p></div>';
                 }
 
                 // Creators
@@ -3065,7 +3555,7 @@
             }
         }
 
-        // Load beats by genre
+        // Load packs by genre
         async function loadBeats(genre) {
             const grid = document.getElementById('newReleasesGrid');
             grid.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
@@ -3075,13 +3565,18 @@
                 const response = await fetch(url);
                 const data = await response.json();
 
-                if (data.beats && data.beats.length > 0) {
-                    grid.innerHTML = data.beats.map(createBeatCard).join('');
+                // Store packs data
+                if (data.packs) {
+                    data.packs.forEach(pack => packsData[pack.id] = pack);
+                }
+
+                if (data.packs && data.packs.length > 0) {
+                    grid.innerHTML = data.packs.map(createPackCard).join('');
                 } else {
                     grid.innerHTML = `
                         <div class="empty-state">
-                            <i data-lucide="music" class="lucide-icon"></i>
-                            <h3>No beats found</h3>
+                            <i data-lucide="disc" class="lucide-icon"></i>
+                            <h3>No sound packs found</h3>
                             <p>Try a different genre or upload your own!</p>
                         </div>
                     `;
@@ -3090,12 +3585,12 @@
                 lucide.createIcons();
 
             } catch (error) {
-                console.error('Error loading beats:', error);
-                grid.innerHTML = '<div class="empty-state"><p>Failed to load beats</p></div>';
+                console.error('Error loading packs:', error);
+                grid.innerHTML = '<div class="empty-state"><p>Failed to load sound packs</p></div>';
             }
         }
 
-        // Play beat
+        // Play beat (legacy support)
         let beatsData = {};
 
         async function playBeat(beatId) {
