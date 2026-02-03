@@ -5173,8 +5173,8 @@
                             <button class="share-btn" onclick="event.stopPropagation(); sharePackLink(${pack.id})" title="Share">
                                 <i data-lucide="share-2" class="lucide-icon"></i>
                             </button>
-                            <button class="play-btn" onclick="event.stopPropagation(); playPackFirst(${pack.id})">
-                                <i data-lucide="play" class="lucide-icon"></i>
+                            <button class="play-btn pack-play-btn" data-pack-id="${pack.id}" onclick="event.stopPropagation(); togglePackPlay(${pack.id})">
+                                <i data-lucide="play" class="lucide-icon pack-play-icon"></i>
                             </button>
                         </div>
                         <div class="pack-track-count">
@@ -5369,9 +5369,43 @@
             }
         });
 
+        // Toggle play/pause for a pack from the pack card
+        function togglePackPlay(packId) {
+            const audio = document.getElementById('audioElement');
+
+            // If this pack is currently playing, toggle play/pause
+            if (currentPackId === packId && audio.src) {
+                if (isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                } else {
+                    audio.play();
+                    isPlaying = true;
+                }
+                updatePlayPauseButton();
+                updatePackCardPlayButtons();
+            } else {
+                // Different pack or no audio loaded, start playing first track
+                playPackTrack(packId, 0);
+            }
+        }
+
         // Play first track in pack
         function playPackFirst(packId) {
             playPackTrack(packId, 0);
+        }
+
+        // Update play/pause icons on all pack cards
+        function updatePackCardPlayButtons() {
+            document.querySelectorAll('.pack-play-btn').forEach(btn => {
+                const btnPackId = parseInt(btn.dataset.packId);
+                const icon = btn.querySelector('.pack-play-icon');
+                if (icon) {
+                    const shouldShowPause = (btnPackId === currentPackId && isPlaying);
+                    icon.setAttribute('data-lucide', shouldShowPause ? 'pause' : 'play');
+                }
+            });
+            lucide.createIcons();
         }
 
         // Play specific track in pack
@@ -5410,6 +5444,9 @@
             // Update like button state
             document.getElementById('playerLikeBtn').classList.toggle('liked', likedTracks.has(track.id));
 
+            // Update pack card play buttons
+            updatePackCardPlayButtons();
+
             // Record play
             fetch(`/api/beatpax/beats/${track.id}/play`, { method: 'POST' });
         }
@@ -5430,6 +5467,7 @@
             audio.currentTime = 0;
             isPlaying = false;
             updatePlayPauseButton();
+            updatePackCardPlayButtons();
 
             // Reset playing state in track list
             document.querySelectorAll('.pack-track-item').forEach(item => {
@@ -5455,6 +5493,7 @@
                 }
             }
             updatePlayPauseButton();
+            updatePackCardPlayButtons();
         }
 
         // Previous track
@@ -5528,12 +5567,14 @@
             isPlaying = false;
             updatePlayPauseButton();
             updateTrackIcons();
+            updatePackCardPlayButtons();
         });
 
         audioElement.addEventListener('play', () => {
             isPlaying = true;
             updatePlayPauseButton();
             updateTrackIcons();
+            updatePackCardPlayButtons();
         });
 
         // Update track play/pause icons based on current state
