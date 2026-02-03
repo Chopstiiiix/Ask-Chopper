@@ -6442,6 +6442,13 @@
                 return;
             }
 
+            // Check file size (max 4MB for Vercel serverless functions)
+            const maxSize = 4 * 1024 * 1024; // 4MB
+            if (file.size > maxSize) {
+                showToast('Image too large. Maximum 4MB allowed.', 'error');
+                return;
+            }
+
             curateCoverFile = file;
 
             // Show preview
@@ -6564,9 +6571,16 @@
         // Handle uploaded files
         function handleCurateFiles(files) {
             const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/x-m4a', 'audio/mp4', 'audio/x-wav'];
+            const maxSize = 4 * 1024 * 1024; // 4MB limit for serverless functions
 
             for (const file of files) {
-                if (allowedTypes.includes(file.type) || file.name.match(/\.(mp3|wav|m4a)$/i)) {
+                // Check file size
+                if (file.size > maxSize) {
+                    showToast(`${file.name} is too large (max 4MB)`, 'error');
+                    continue;
+                }
+
+                if (allowedTypes.includes(file.type) || file.name.match(/\.(mp3|wav|m4a|flac)$/i)) {
                     curateUploadedFiles.push(file);
                 } else {
                     showToast(`${file.name} is not a supported audio format`, 'error');
