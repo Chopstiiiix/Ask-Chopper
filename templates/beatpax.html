@@ -3478,6 +3478,171 @@
             cursor: not-allowed;
         }
 
+        /* Curate source tabs */
+        .curate-source-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .curate-source-tab {
+            flex: 1;
+            padding: 12px 16px;
+            background: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+            color: #888;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .curate-source-tab:hover {
+            background: #2d2d2d;
+            color: #fff;
+        }
+
+        .curate-source-tab.active {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+
+        .curate-source-tab .lucide-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .curate-source-content {
+            display: none;
+        }
+
+        .curate-source-content.active {
+            display: block;
+        }
+
+        /* File upload area */
+        .curate-upload-area {
+            border: 2px dashed #2d2d2d;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .curate-upload-area:hover {
+            border-color: #4a4a4a;
+            background: #1a1a1a;
+        }
+
+        .curate-upload-area.dragover {
+            border-color: #4ade80;
+            background: #1a3a1a;
+        }
+
+        .curate-upload-area .lucide-icon {
+            width: 48px;
+            height: 48px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .curate-upload-area h4 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .curate-upload-area p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .curate-upload-area input[type="file"] {
+            display: none;
+        }
+
+        /* Uploaded files list */
+        .curate-uploaded-files {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #2d2d2d;
+            border-radius: 8px;
+        }
+
+        .curate-uploaded-file {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .curate-uploaded-file:last-child {
+            border-bottom: none;
+        }
+
+        .curate-uploaded-file .file-icon {
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .curate-uploaded-file .file-icon .lucide-icon {
+            width: 20px;
+            height: 20px;
+            color: #888;
+        }
+
+        .curate-uploaded-file .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .curate-uploaded-file .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .curate-uploaded-file .file-size {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .curate-uploaded-file .file-remove {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .curate-uploaded-file .file-remove:hover {
+            background: #2d2d2d;
+            color: #ff4444;
+        }
+
+        .curate-uploaded-file .file-remove .lucide-icon {
+            width: 16px;
+            height: 16px;
+        }
+
         /* Responsive sidebar */
         @media (max-width: 1024px) {
             .beatpax-sidebar {
@@ -3674,10 +3839,6 @@
                     <input type="text" class="curate-form-input" id="curatePackName" placeholder="e.g., Summer Vibes Collection">
                 </div>
                 <div class="curate-form-group">
-                    <label class="curate-form-label">Recipient Name (optional)</label>
-                    <input type="text" class="curate-form-input" id="curateRecipient" placeholder="e.g., For Sarah">
-                </div>
-                <div class="curate-form-group">
                     <label class="curate-form-label">Description (optional)</label>
                     <input type="text" class="curate-form-input" id="curateDescription" placeholder="A short description of your pack">
                 </div>
@@ -3692,10 +3853,35 @@
                     </label>
                 </div>
                 <div class="curate-form-group">
-                    <label class="curate-form-label">Select Tracks *</label>
-                    <div class="curate-track-selector" id="curateTrackSelector">
-                        <div style="padding: 20px; text-align: center; color: #666;">
-                            Loading your tracks...
+                    <label class="curate-form-label">Add Tracks *</label>
+                    <div class="curate-source-tabs">
+                        <button type="button" class="curate-source-tab active" data-source="upload" onclick="switchCurateSource('upload')">
+                            <i data-lucide="upload" class="lucide-icon"></i>
+                            Upload Files
+                        </button>
+                        <button type="button" class="curate-source-tab" data-source="beatpax" onclick="switchCurateSource('beatpax')">
+                            <i data-lucide="music" class="lucide-icon"></i>
+                            From Beatpax
+                        </button>
+                    </div>
+
+                    <!-- Upload Files Content -->
+                    <div class="curate-source-content active" id="curateUploadContent">
+                        <div class="curate-upload-area" id="curateUploadArea" onclick="document.getElementById('curateFileInput').click()">
+                            <i data-lucide="upload-cloud" class="lucide-icon"></i>
+                            <h4>Drop audio files here</h4>
+                            <p>or click to browse (MP3, WAV, M4A)</p>
+                            <input type="file" id="curateFileInput" accept="audio/*" multiple>
+                        </div>
+                        <div class="curate-uploaded-files" id="curateUploadedFiles" style="display: none;"></div>
+                    </div>
+
+                    <!-- From Beatpax Content -->
+                    <div class="curate-source-content" id="curateBeatpaxContent">
+                        <div class="curate-track-selector" id="curateTrackSelector">
+                            <div style="padding: 20px; text-align: center; color: #666;">
+                                Loading your tracks...
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6106,24 +6292,148 @@
             }
         }
 
+        // Curate modal state
+        let curateUploadedFiles = [];
+        let curateSource = 'upload';
+
         // Open curate modal
         async function openCurateModal() {
             document.getElementById('curateModal').classList.add('active');
             selectedCurateTracks.clear();
+            curateUploadedFiles = [];
+            curateSource = 'upload';
             document.getElementById('curatePackName').value = '';
-            document.getElementById('curateRecipient').value = '';
             document.getElementById('curateDescription').value = '';
             document.getElementById('curateFreeToggle').checked = false;
             document.getElementById('createCuratedPackBtn').disabled = true;
 
+            // Reset tabs
+            switchCurateSource('upload');
+
+            // Reset upload area
+            document.getElementById('curateUploadedFiles').style.display = 'none';
+            document.getElementById('curateUploadedFiles').innerHTML = '';
+            document.getElementById('curateUploadArea').style.display = 'block';
+
             // Load available tracks (liked + downloaded)
             await loadCurateTrackOptions();
             lucide.createIcons();
+
+            // Setup file input and drag/drop
+            setupCurateFileUpload();
         }
 
         // Close curate modal
         function closeCurateModal() {
             document.getElementById('curateModal').classList.remove('active');
+            curateUploadedFiles = [];
+        }
+
+        // Switch curate source tab
+        function switchCurateSource(source) {
+            curateSource = source;
+
+            // Update tabs
+            document.querySelectorAll('.curate-source-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.source === source);
+            });
+
+            // Update content
+            document.getElementById('curateUploadContent').classList.toggle('active', source === 'upload');
+            document.getElementById('curateBeatpaxContent').classList.toggle('active', source === 'beatpax');
+
+            validateCurateForm();
+            lucide.createIcons();
+        }
+
+        // Setup file upload handlers
+        function setupCurateFileUpload() {
+            const uploadArea = document.getElementById('curateUploadArea');
+            const fileInput = document.getElementById('curateFileInput');
+
+            // File input change
+            fileInput.onchange = (e) => {
+                handleCurateFiles(e.target.files);
+            };
+
+            // Drag and drop
+            uploadArea.ondragover = (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            };
+
+            uploadArea.ondragleave = (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            };
+
+            uploadArea.ondrop = (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleCurateFiles(e.dataTransfer.files);
+            };
+        }
+
+        // Handle uploaded files
+        function handleCurateFiles(files) {
+            const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/x-m4a', 'audio/mp4', 'audio/x-wav'];
+
+            for (const file of files) {
+                if (allowedTypes.includes(file.type) || file.name.match(/\.(mp3|wav|m4a)$/i)) {
+                    curateUploadedFiles.push(file);
+                } else {
+                    showToast(`${file.name} is not a supported audio format`, 'error');
+                }
+            }
+
+            renderCurateUploadedFiles();
+            validateCurateForm();
+        }
+
+        // Render uploaded files list
+        function renderCurateUploadedFiles() {
+            const container = document.getElementById('curateUploadedFiles');
+            const uploadArea = document.getElementById('curateUploadArea');
+
+            if (curateUploadedFiles.length === 0) {
+                container.style.display = 'none';
+                uploadArea.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'block';
+            uploadArea.style.display = 'block';
+
+            container.innerHTML = curateUploadedFiles.map((file, index) => `
+                <div class="curate-uploaded-file">
+                    <div class="file-icon">
+                        <i data-lucide="music" class="lucide-icon"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="file-remove" onclick="removeCurateFile(${index})">
+                        <i data-lucide="x" class="lucide-icon"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Remove uploaded file
+        function removeCurateFile(index) {
+            curateUploadedFiles.splice(index, 1);
+            renderCurateUploadedFiles();
+            validateCurateForm();
         }
 
         // Load track options for curate modal
@@ -6191,42 +6501,107 @@
                 option.classList.add('selected');
             }
 
-            // Enable/disable create button
-            const nameInput = document.getElementById('curatePackName');
-            const createBtn = document.getElementById('createCuratedPackBtn');
-            createBtn.disabled = !nameInput.value.trim() || selectedCurateTracks.size === 0;
+            validateCurateForm();
         }
 
         // Validate curate form
-        document.getElementById('curatePackName')?.addEventListener('input', function() {
+        function validateCurateForm() {
+            const nameInput = document.getElementById('curatePackName');
             const createBtn = document.getElementById('createCuratedPackBtn');
-            createBtn.disabled = !this.value.trim() || selectedCurateTracks.size === 0;
-        });
+            const hasName = nameInput.value.trim().length > 0;
+
+            let hasTracks = false;
+            if (curateSource === 'upload') {
+                hasTracks = curateUploadedFiles.length > 0;
+            } else {
+                hasTracks = selectedCurateTracks.size > 0;
+            }
+
+            createBtn.disabled = !hasName || !hasTracks;
+        }
+
+        // Validate curate form on name input
+        document.getElementById('curatePackName')?.addEventListener('input', validateCurateForm);
 
         // Create curated pack
         async function createCuratedPack() {
             const name = document.getElementById('curatePackName').value.trim();
-            const recipient = document.getElementById('curateRecipient').value.trim();
             const description = document.getElementById('curateDescription').value.trim();
             const isFree = document.getElementById('curateFreeToggle').checked;
-            const trackIds = Array.from(selectedCurateTracks);
-
-            if (!name || trackIds.length === 0) {
-                showToast('Please enter a name and select at least one track', 'error');
-                return;
-            }
 
             const createBtn = document.getElementById('createCuratedPackBtn');
             createBtn.disabled = true;
             createBtn.textContent = 'Creating...';
 
             try {
+                let trackIds = [];
+
+                if (curateSource === 'upload' && curateUploadedFiles.length > 0) {
+                    // Upload files first
+                    createBtn.textContent = 'Uploading files...';
+
+                    for (let i = 0; i < curateUploadedFiles.length; i++) {
+                        const file = curateUploadedFiles[i];
+                        createBtn.textContent = `Uploading ${i + 1}/${curateUploadedFiles.length}...`;
+
+                        // Upload audio file
+                        const formData = new FormData();
+                        formData.append('audio', file);
+                        formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Remove extension for title
+
+                        const uploadResp = await fetch('/api/beatpax/upload-audio', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const uploadData = await uploadResp.json();
+                        if (uploadData.error) {
+                            showToast(`Failed to upload ${file.name}: ${uploadData.error}`, 'error');
+                            continue;
+                        }
+
+                        // Create beat entry
+                        const beatResp = await fetch('/api/beatpax/create-beat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                title: file.name.replace(/\.[^/.]+$/, ''),
+                                audio_url: uploadData.url,
+                                genre: 'Other'
+                            })
+                        });
+
+                        const beatData = await beatResp.json();
+                        if (beatData.beat && beatData.beat.id) {
+                            trackIds.push(beatData.beat.id);
+                        }
+                    }
+
+                    if (trackIds.length === 0) {
+                        showToast('Failed to upload any tracks', 'error');
+                        createBtn.disabled = false;
+                        createBtn.textContent = 'Create Pack';
+                        return;
+                    }
+                } else {
+                    // Use selected tracks from Beatpax
+                    trackIds = Array.from(selectedCurateTracks);
+                }
+
+                if (trackIds.length === 0) {
+                    showToast('Please add at least one track', 'error');
+                    createBtn.disabled = false;
+                    createBtn.textContent = 'Create Pack';
+                    return;
+                }
+
+                createBtn.textContent = 'Creating pack...';
+
                 const response = await fetch('/api/beatpax/curated', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name,
-                        recipient_name: recipient || null,
                         description: description || null,
                         is_free: isFree,
                         track_ids: trackIds
@@ -6249,6 +6624,7 @@
                     showToast(data.error || 'Failed to create pack', 'error');
                 }
             } catch (e) {
+                console.error('Error creating pack:', e);
                 showToast('Failed to create pack', 'error');
             }
 
