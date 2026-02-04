@@ -11,15 +11,12 @@ import io
 from typing import Tuple, List, Optional
 from openai import OpenAI
 
-# Lazy initialization of OpenAI client
-_client = None
-
 def _get_openai_client():
-    """Get or create OpenAI client (lazy initialization)"""
-    global _client
-    if _client is None:
-        _client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    return _client
+    """Get fresh OpenAI client for serverless compatibility."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY not set")
+    return OpenAI(api_key=api_key)
 
 # Embedding model configuration
 EMBEDDING_MODEL = "text-embedding-3-small"

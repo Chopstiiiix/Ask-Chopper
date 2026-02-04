@@ -97,7 +97,19 @@ def db_commit_with_retry(max_retries=3):
             raise
     return False
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+def get_openai_client():
+    """Get OpenAI client - creates fresh instance for serverless compatibility."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY not set")
+    return OpenAI(api_key=api_key)
+
+# Keep for backward compatibility but prefer get_openai_client() in functions
+client = None
+try:
+    client = get_openai_client()
+except:
+    pass  # Will be created on demand
 
 # Verification code
 VERIFICATION_CODE = "1234567890"
@@ -437,13 +449,16 @@ For more information: https://en.wikipedia.org/wiki/Chopstix_(music_producer)"""
         # Add current user message
         messages.append({"role": "user", "content": prompt})
 
-        # Log API call details to both console and file
+        # Log API call details
         import sys
-        log_message = f"🚀 Making OpenAI API call... Messages: {len(messages)}, API Key: {os.environ.get('OPENAI_API_KEY', 'NOT_SET')[:10]}..."
+        log_message = f"🚀 Making OpenAI API call... Messages: {len(messages)}"
         print(log_message, file=sys.stdout, flush=True)
 
+        # Get fresh OpenAI client for serverless compatibility
+        openai_client = get_openai_client()
+
         # Generate response using Chat Completions API
-        response = client.chat.completions.create(
+        response = openai_client.chat.completions.create(
             model="gpt-4",
             messages=messages,
             temperature=0.7,
@@ -1189,7 +1204,8 @@ Guidelines:
         messages.append({"role": "user", "content": context_prompt})
 
         print(f"DEBUG: Calling OpenAI Chat Completions API...")
-        response = client.chat.completions.create(
+        openai_client = get_openai_client()
+        response = openai_client.chat.completions.create(
             model="gpt-4",
             messages=messages,
             temperature=0.7,
