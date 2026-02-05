@@ -5568,14 +5568,18 @@
                 showToast(data.message, 'success');
 
                 // Update UI - only target like buttons
-                document.querySelectorAll(`.pack-track-item[data-track-id="${trackId}"] .like-btn`).forEach(btn => {
+                document.querySelectorAll(`.pack-track-item[data-track-id="${trackId}"] .like-btn, .sidebar-track-item[data-track-id="${trackId}"] .like-btn`).forEach(btn => {
                     btn.classList.toggle('liked', data.liked);
                 });
 
                 // Update player bar like button if this is the current track
-                const pack = packsData[currentPackId];
-                if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]?.id === trackId) {
+                if (currentSidebarBeatId === trackId) {
                     document.getElementById('playerLikeBtn').classList.toggle('liked', data.liked);
+                } else {
+                    const pack = packsData[currentPackId];
+                    if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]?.id === trackId) {
+                        document.getElementById('playerLikeBtn').classList.toggle('liked', data.liked);
+                    }
                 }
 
                 // Update sidebar count
@@ -5831,16 +5835,24 @@
         document.getElementById('playerNextBtn').addEventListener('click', nextTrack);
 
         document.getElementById('playerLikeBtn').addEventListener('click', () => {
-            const pack = packsData[currentPackId];
-            if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]) {
-                toggleTrackLike(pack.tracks[currentPackTrackIndex].id);
+            if (currentSidebarBeatId) {
+                toggleTrackLike(currentSidebarBeatId);
+            } else {
+                const pack = packsData[currentPackId];
+                if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]) {
+                    toggleTrackLike(pack.tracks[currentPackTrackIndex].id);
+                }
             }
         });
 
         document.getElementById('playerDownloadBtn').addEventListener('click', () => {
-            const pack = packsData[currentPackId];
-            if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]) {
-                downloadTrack(pack.tracks[currentPackTrackIndex].id);
+            if (currentSidebarBeatId) {
+                downloadTrack(currentSidebarBeatId);
+            } else {
+                const pack = packsData[currentPackId];
+                if (pack && pack.tracks && pack.tracks[currentPackTrackIndex]) {
+                    downloadTrack(pack.tracks[currentPackTrackIndex].id);
+                }
             }
         });
 
@@ -5869,7 +5881,14 @@
         });
 
         audioElement.addEventListener('ended', () => {
-            nextTrack();
+            if (currentPackId) {
+                nextTrack();
+            } else {
+                // Sidebar track ended — reset playing state
+                isPlaying = false;
+                updatePlayPauseButton();
+                updateSidebarTrackPlayButtons();
+            }
         });
 
         audioElement.addEventListener('pause', () => {
