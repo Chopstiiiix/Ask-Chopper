@@ -3179,6 +3179,7 @@
             border-radius: 6px;
             object-fit: cover;
             background: #1a1a1a;
+            display: block;
         }
 
         .sidebar-track-info {
@@ -3233,23 +3234,53 @@
             border-left: 3px solid #fff;
         }
 
-        .sidebar-track-play-btn {
-            background: none;
-            border: none;
-            color: #888;
-            padding: 8px;
-            cursor: pointer;
+        .sidebar-track-cover-wrap {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
             border-radius: 6px;
-            transition: all 0.2s;
+            overflow: hidden;
         }
 
-        .sidebar-track-play-btn:hover {
-            background: #2d2d2d;
-            color: #fff;
+        .sidebar-track-cover-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .sidebar-track-item.playing .sidebar-track-play-btn {
-            color: #fff;
+        .sidebar-track-item:hover .sidebar-track-cover-overlay,
+        .sidebar-track-item.playing .sidebar-track-cover-overlay {
+            opacity: 1;
+        }
+
+        .sidebar-cover-play-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .sidebar-cover-play-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .sidebar-cover-play-btn .lucide-icon {
+            width: 16px;
+            height: 16px;
+            color: #000;
+            margin-left: 1px;
         }
 
         /* Empty state */
@@ -5779,7 +5810,7 @@
         function updateSidebarTrackPlayButtons() {
             document.querySelectorAll('.sidebar-track-item').forEach(item => {
                 const trackId = parseInt(item.dataset.trackId);
-                const btn = item.querySelector('.sidebar-track-play-btn');
+                const btn = item.querySelector('.sidebar-cover-play-btn');
                 const isCurrent = (currentSidebarBeatId === trackId && isPlaying);
 
                 item.classList.toggle('playing', currentSidebarBeatId === trackId && isPlaying);
@@ -6646,15 +6677,19 @@
             const isLiked = likedTracks.has(beat.id);
             return `
                 <div class="sidebar-track-item" data-track-id="${beat.id}">
-                    <img src="${beat.cover_url || '/static/images/default-cover.png'}" alt="" class="sidebar-track-cover">
+                    <div class="sidebar-track-cover-wrap">
+                        <img src="${beat.cover_url || '/static/images/default-cover.png'}" alt="" class="sidebar-track-cover">
+                        <div class="sidebar-track-cover-overlay">
+                            <button class="sidebar-cover-play-btn" onclick="toggleSidebarTrackPlay(${beat.id}, '${(beat.audio_url || '').replace(/'/g, "\\'")}', '${(beat.title || '').replace(/'/g, "\\'")}', '${(beat.creator_name || 'Unknown').replace(/'/g, "\\'")}', '${(beat.cover_url || '').replace(/'/g, "\\'")}')" title="Play">
+                                <i data-lucide="play" class="lucide-icon"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="sidebar-track-info">
                         <div class="sidebar-track-title">${beat.title}</div>
                         <div class="sidebar-track-meta">${beat.creator_name || 'Unknown'} ${beat.bpm ? '• ' + beat.bpm + ' BPM' : ''}</div>
                     </div>
                     <div class="sidebar-track-actions">
-                        <button class="sidebar-track-play-btn" onclick="toggleSidebarTrackPlay(${beat.id}, '${(beat.audio_url || '').replace(/'/g, "\\'")}', '${(beat.title || '').replace(/'/g, "\\'")}', '${(beat.creator_name || 'Unknown').replace(/'/g, "\\'")}', '${(beat.cover_url || '').replace(/'/g, "\\'")}')" title="Play">
-                            <i data-lucide="play" class="lucide-icon"></i>
-                        </button>
                         ${showLike ? `
                             <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="toggleTrackLike(${beat.id})" title="Like">
                                 <i data-lucide="heart" class="lucide-icon"></i>
